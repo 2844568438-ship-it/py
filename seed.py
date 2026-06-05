@@ -71,7 +71,7 @@ def init_data():
             mentorship=dd.get('mentorship',''),
             awards=dd.get('awards',''),
             hospital=dd.get('hospital',''),
-            avatar="",  # 用CSS渐变+首字母，国内无障碍
+            avatar=f"https://i.pravatar.cc/300?img={(i % 70) + 1}",  # 职业头像
             gender=random.choice(['男','女']),
             age=random.randint(40,68),
             consultation_fee=dd.get('fee',25)
