@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}健康档案 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header"><h2>我的健康档案</h2></div>
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>血型</label>
+          <select name="blood_type" class="form-input">
+            <option value="">未选择</option>
+            {% for t in ['A','B','AB','O'] %}
+            <option value="{{ t }}" {% if profile and profile.blood_type==t %}selected{% endif %}>{{ t }}型</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>身高 (cm)</label>
+          <input type="number" name="height" class="form-input" value="{{ profile.height if profile else '' }}" step="0.1" min="50" max="250">
+        </div>
+        <div class="form-group">
+          <label>体重 (kg)</label>
+          <input type="number" name="weight" class="form-input" value="{{ profile.weight if profile else '' }}" step="0.1" min="20" max="300">
+        </div>
+        <div class="form-group">
+          <label>吸烟史</label>
+          <select name="smoking" class="form-input">
+            {% for v, label in [('never','从不'),('former','已戒烟'),('current','吸烟中')] %}
+            <option value="{{ v }}" {% if profile and profile.smoking==v %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>饮酒</label>
+          <select name="alcohol" class="form-input">
+            {% for v, label in [('never','从不'),('occasional','偶尔'),('regular','经常')] %}
+            <option value="{{ v }}" {% if profile and profile.alcohol==v %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>过敏史（逗号分隔，如：青霉素,海鲜,花粉）</label>
+        <input type="text" name="allergies" class="form-input" value="{{ profile.allergies if profile else '' }}" placeholder="如：青霉素, 头孢, 海鲜">
+      </div>
+      <div class="form-group">
+        <label>慢性病史（逗号分隔）</label>
+        <input type="text" name="chronic_diseases" class="form-input" value="{{ profile.chronic_diseases if profile else '' }}" placeholder="如：高血压, 糖尿病">
+      </div>
+      <div class="form-group">
+        <label>家族病史</label>
+        <textarea name="family_history" class="form-input" rows="3" placeholder="直系亲属重大疾病史...">{{ profile.family_history if profile else '' }}</textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">保存档案</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

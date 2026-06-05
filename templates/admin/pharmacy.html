@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}发药管理 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header"><h2>发药管理</h2></div>
+<div class="card">
+  <div class="card-body">
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>ID</th><th>患者</th><th>药品</th><th>规格</th><th>用法用量</th><th>数量</th><th>金额</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+        <tbody>
+        {% for p in prescriptions %}
+        <tr>
+          <td>#{{ p.id }}</td>
+          <td>{{ p.patient.name }}</td>
+          <td><strong>{{ p.medicine_name }}</strong></td>
+          <td>{{ p.specification or '-' }}</td>
+          <td>{{ p.dosage or '-' }}</td>
+          <td>{{ p.quantity }}</td>
+          <td class="price">¥{{ '%.2f' % p.price }}</td>
+          <td><span class="badge badge-{{ 'success' if p.status=='dispensed' else 'warning' }}">{{ '已发药' if p.status=='dispensed' else '待发药' }}</span></td>
+          <td>{{ p.created_at.strftime('%m-%d %H:%M') }}</td>
+          <td>
+            {% if p.status == 'prescribed' %}
+            <form method="POST" action="{{ url_for('admin.pharmacy_dispense', prescription_id=p.id) }}" style="display:inline">
+              <button class="btn btn-sm btn-success" onclick="return confirm('确认发药？将扣减库存')">发药</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

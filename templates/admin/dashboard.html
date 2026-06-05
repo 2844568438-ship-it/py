@@ -31,6 +31,22 @@
     <div class="stat-val">{{ total_appts }}</div>
     <div class="stat-label">累计预约</div>
   </div>
+  <div class="stat-card" style="--c:#10b981">
+    <div class="stat-val">¥{{ '%.0f' % today_revenue }}</div>
+    <div class="stat-label">今日收入</div>
+  </div>
+  <div class="stat-card" style="--c:#6366f1">
+    <div class="stat-val">¥{{ '%.0f' % total_revenue }}</div>
+    <div class="stat-label">累计收入</div>
+  </div>
+  <div class="stat-card" style="--c:#f97316">
+    <div class="stat-val">{{ unpaid_count }}</div>
+    <div class="stat-label">待收账单</div>
+  </div>
+  <div class="stat-card" style="--c:#ef4444">
+    <div class="stat-val">{{ low_stock }}</div>
+    <div class="stat-label">库存预警</div>
+  </div>
 </div>
 
 <div class="charts-grid">

@@ -39,6 +39,22 @@
       <h3>{% if consultation.diagnosis %}诊断结果（已完成）{% else %}填写诊断{% endif %}</h3>
       <form method="POST" action="{{ url_for('doctor.diagnose', consult_id=consultation.id) }}">
         <div class="form-group">
+          <label>主诉（患者主要不适）</label>
+          <input type="text" name="chief_complaint" value="{{ consultation.chief_complaint or '' }}" placeholder="如：咳嗽伴发热3天" {{ 'readonly' if consultation.diagnosis }}>
+        </div>
+        <div class="form-group">
+          <label>现病史</label>
+          <textarea name="present_illness" rows="2" placeholder="发病经过、症状变化..." {{ 'readonly' if consultation.diagnosis }}>{{ consultation.present_illness or '' }}</textarea>
+        </div>
+        <div class="form-group">
+          <label>体格检查</label>
+          <textarea name="physical_exam" rows="2" placeholder="查体所见..." {{ 'readonly' if consultation.diagnosis }}>{{ consultation.physical_exam or '' }}</textarea>
+        </div>
+        <div class="form-group">
+          <label>生命体征（JSON格式）</label>
+          <input type="text" name="vital_signs" value="{{ consultation.vital_signs or '' }}" placeholder='{"temp":36.5,"pulse":72,"resp":18,"bp":"120/80"}' {{ 'readonly' if consultation.diagnosis }}>
+        </div>
+        <div class="form-group">
           <label>诊断结果</label>
           <textarea name="diagnosis" rows="2" placeholder="请输入诊断结果..." {{ 'readonly' if consultation.diagnosis }}>{{ consultation.diagnosis or '' }}</textarea>
         </div>
@@ -47,7 +63,7 @@
           <textarea name="advice" rows="2" placeholder="请输入医嘱建议..." {{ 'readonly' if consultation.diagnosis }}>{{ consultation.advice or '' }}</textarea>
         </div>
         {% if not consultation.diagnosis %}
-        <button type="submit" class="btn btn-success btn-block">完成诊断</button>
+        <button type="submit" class="btn btn-success btn-block">完成诊断并生成账单</button>
         {% endif %}
       </form>
     </div>

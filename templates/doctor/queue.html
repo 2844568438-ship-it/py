@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}排队叫号 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header"><h2>今日排队叫号</h2><span class="text-muted">{{ today.strftime('%Y年%m月%d日') }}</span></div>
+<div class="card">
+  <div class="card-body">
+    {% if queue_list %}
+    <div class="queue-board">
+      {% for a in queue_list %}
+      <div class="queue-item {% if loop.index0 == current_idx %}queue-current{% endif %}">
+        <div class="queue-num">{{ a.queue_number }}号</div>
+        <div class="queue-info">
+          <strong>{{ a.patient.name }}</strong>
+          <span class="text-muted">{{ {'first_visit':'初诊','follow_up':'复诊','emergency':'急诊'}.get(a.visit_type, '初诊') }}</span>
+          <span>{{ a.time_slot }}</span>
+        </div>
+        <div class="queue-actions">
+          <a href="{{ url_for('doctor.consult', appt_id=a.id) }}" class="btn btn-sm btn-primary">接诊</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">今日暂无待就诊患者</div>
+    {% endif %}
+  </div>
+</div>
+<style>
+.queue-board { display:flex; flex-direction:column; gap:8px; }
+.queue-item { display:flex; align-items:center; gap:16px; padding:14px 18px; background:var(--bg); border-radius:10px; transition:all .2s; }
+.queue-item.queue-current { background:#dbeafe; border:2px solid var(--primary); transform:scale(1.02); }
+.queue-num { font-size:1.4rem; font-weight:800; color:var(--primary); min-width:55px; }
+.queue-info { flex:1; display:flex; flex-direction:column; gap:4px; }
+.queue-info strong { font-size:1.05rem; }
+</style>
+{% endblock %}

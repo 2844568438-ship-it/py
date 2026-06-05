@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}账单详情 #{{ bill.id }} - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2>账单详情 #{{ bill.id }}</h2>
+  <a href="{{ url_for('patient.bills') }}" class="btn btn-ghost">← 返回</a>
+</div>
+<div class="card">
+  <div class="card-body">
+    <div class="bill-info">
+      <div class="info-row"><span class="label">状态</span><span class="badge badge-{{ 'success' if bill.status=='paid' else 'warning' }}">{{ {'unpaid':'待支付','paid':'已支付','refunded':'已退款'}.get(bill.status) }}</span></div>
+      <div class="info-row"><span class="label">就诊医生</span><span>{{ bill.consultation.doctor.name if bill.consultation else '-' }}</span></div>
+      <div class="info-row"><span class="label">创建时间</span><span>{{ bill.created_at.strftime('%Y-%m-%d %H:%M') }}</span></div>
+      {% if bill.status == 'paid' %}
+      <div class="info-row"><span class="label">支付方式</span><span>{{ {'cash':'现金','wechat':'微信支付','alipay':'支付宝','insurance':'医保'}.get(bill.payment_method, bill.payment_method) }}</span></div>
+      <div class="info-row"><span class="label">支付时间</span><span>{{ bill.paid_at.strftime('%Y-%m-%d %H:%M') if bill.paid_at else '-' }}</span></div>
+      {% endif %}
+    </div>
+    <hr>
+    <h4>费用明细</h4>
+    <table class="table">
+      <thead><tr><th>项目</th><th>类型</th><th>数量</th><th>单价</th><th>小计</th></tr></thead>
+      <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.item_name }}</td>
+        <td><span class="badge">{{ {'consultation_fee':'诊查费','medicine':'药品费'}.get(item.item_type, item.item_type) }}</span></td>
+        <td>{{ item.quantity }}</td>
+        <td>¥{{ '%.2f' % item.unit_price }}</td>
+        <td class="price">¥{{ '%.2f' % item.subtotal }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+      <tfoot><tr><td colspan="4" style="text-align:right;font-weight:700">合计</td><td class="price" style="font-size:1.2rem;font-weight:700">¥{{ '%.2f' % bill.total_amount }}</td></tr></tfoot>
+    </table>
+    {% if bill.status == 'unpaid' %}
+    <div style="margin-top:20px;display:flex;gap:10px;justify-content:flex-end">
+      <form method="POST" action="{{ url_for('patient.pay_bill', bill_id=bill.id) }}">
+        <input type="hidden" name="payment_method" value="wechat">
+        <button class="btn btn-success" onclick="return confirm('确认支付？')">微信支付</button>
+      </form>
+      <form method="POST" action="{{ url_for('patient.pay_bill', bill_id=bill.id) }}">
+        <input type="hidden" name="payment_method" value="alipay">
+        <button class="btn btn-primary" onclick="return confirm('确认支付？')">支付宝支付</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
