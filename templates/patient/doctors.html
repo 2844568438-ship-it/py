@@ -33,8 +33,8 @@
       <div class="doctor-avatar-lg">{{ d.name[0] }}</div>
       <div class="doctor-card-info">
         <h3>{{ d.name }} <span class="stars">{% for i in range(5) %}{% if i < (d.avg_rating|default(4.5)|round(0,'floor')) %}<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{% else %}<svg viewBox="0 0 24 24" class="empty"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{% endif %}{% endfor %}</span></h3>
-        <span class="title">{{ d.title or '医生' }}</span>
-        <div class="dept">{{ d.department.name }}</div>
+        <span class="title">{{ d.title or '医生' }}{% if d.hospital %} · {{ d.hospital }}{% endif %}</span>
+        <div class="dept">{{ d.department.name }}{% if d.mentorship %} · {{ d.mentorship }}{% endif %}</div>
       </div>
     </div>
     <div class="doctor-stats">

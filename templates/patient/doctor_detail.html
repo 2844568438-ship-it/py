@@ -5,25 +5,59 @@
   <div>
     <div class="breadcrumb"><a href="{{ url_for('patient.doctors') }}">找医生</a> / {{ doctor.name }}</div>
     <h1>{{ doctor.name }}</h1>
-    <p>{{ doctor.title or '医生' }} · {{ doctor.department.name }}</p>
+    <p>{{ doctor.title }} · {{ doctor.department.name }}{% if doctor.hospital %} · {{ doctor.hospital }}{% endif %}</p>
   </div>
   <button class="btn btn-primary" onclick="showBookModal({{ doctor.id }}, '{{ doctor.name }}')">预约挂号</button>
 </div>
 
-<div class="consult-layout" style="margin-top:20px">
+<div style="display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start;margin-top:20px">
+  <!-- 左侧：详细简历 -->
   <div>
+    {% if doctor.education or doctor.training or doctor.research %}
     <div class="card mb-4">
-      <h3 style="margin-bottom:16px">擅长领域</h3>
-      <div class="doctor-tags">
-        {% for t in (doctor.specialty or '').replace('、',',').split(',') %}
-        <span class="doctor-tag" style="font-size:.9rem;padding:8px 14px">{{ t.strip() }}</span>
-        {% endfor %}
+      <h3 style="margin-bottom:16px;font-size:1.2rem">📋 详细简历</h3>
+      {% if doctor.education %}
+      <div style="margin-bottom:16px">
+        <strong style="color:var(--primary)">🎓 教育背景</strong>
+        <p style="color:var(--text-light);line-height:1.7;margin-top:4px;white-space:pre-line">{{ doctor.education }}</p>
       </div>
+      {% endif %}
+      {% if doctor.training %}
+      <div style="margin-bottom:16px">
+        <strong style="color:var(--primary)">🏥 规培/进修经历</strong>
+        <p style="color:var(--text-light);line-height:1.7;margin-top:4px;white-space:pre-line">{{ doctor.training }}</p>
+      </div>
+      {% endif %}
+      {% if doctor.research %}
+      <div style="margin-bottom:16px">
+        <strong style="color:var(--primary)">🔬 科研方向与成果</strong>
+        <p style="color:var(--text-light);line-height:1.7;margin-top:4px;white-space:pre-line">{{ doctor.research }}</p>
+      </div>
+      {% endif %}
+      {% if doctor.mentorship %}
+      <div style="margin-bottom:16px">
+        <strong style="color:var(--primary)">👨‍🏫 导师类型</strong>
+        <p style="color:var(--text-light);line-height:1.7;margin-top:4px">{{ doctor.mentorship }}</p>
+      </div>
+      {% endif %}
+      {% if doctor.awards %}
+      <div style="margin-bottom:0">
+        <strong style="color:var(--primary)">🏆 获奖与荣誉</strong>
+        <p style="color:var(--text-light);line-height:1.7;margin-top:4px;white-space:pre-line">{{ doctor.awards }}</p>
+      </div>
+      {% endif %}
     </div>
+    {% endif %}
 
     <div class="card mb-4">
-      <h3 style="margin-bottom:16px">医生简介</h3>
-      <p style="color:var(--text-light);line-height:1.8">{{ doctor.bio or '暂无简介' }}</p>
+      <h3 style="margin-bottom:12px">擅长领域</h3>
+      <div class="doctor-tags" style="flex-wrap:wrap;gap:8px">
+        {% for t in (doctor.specialty or '').replace('、',',').replace('，',',').split(',') %}
+        {% if t.strip() %}
+        <span style="display:inline-block;padding:8px 14px;background:#eff6ff;color:var(--primary);border-radius:8px;font-size:.9rem;font-weight:600;margin:0 4px 4px 0">{{ t.strip() }}</span>
+        {% endif %}
+        {% endfor %}
+      </div>
     </div>
 
     <div class="card">
@@ -34,7 +68,11 @@
         <div class="review-item">
           <div class="review-header">
             <span class="review-patient">{{ r.patient.name }} <span style="font-size:.8rem;color:var(--text-muted);margin-left:8px">{{ r.created_at.strftime('%Y-%m-%d') }}</span></span>
-            <span class="stars">{% for i in range(5) %}<svg viewBox="0 0 24 24" width="14" height="14" style="fill:{{ '#f59e0b' if i < r.rating else '#e2e8f0' }}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{% endfor %}</span>
+            <span class="stars">
+              {% for i in range(5) %}
+              <svg width="14" height="14" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="{{ '#f59e0b' if i < r.rating else '#e2e8f0' }}"/></svg>
+              {% endfor %}
+            </span>
           </div>
           {% if r.content %}<div class="review-body">{{ r.content }}</div>{% endif %}
           {% if r.tags %}<div class="review-tags">{% for t in r.tags.split(',') %}<span class="review-tag">{{ t.strip() }}</span>{% endfor %}</div>{% endif %}
@@ -47,17 +85,24 @@
     </div>
   </div>
 
-  <div class="consult-side">
+  <!-- 右侧卡片 -->
+  <div>
     <div class="card" style="text-align:center">
       <div class="doctor-avatar-lg" style="margin:0 auto 16px;width:80px;height:80px;font-size:30px">{{ doctor.name[0] }}</div>
       <h3>{{ doctor.name }}</h3>
-      <p style="color:var(--text-muted)">{{ doctor.title or '医生' }}</p>
+      <p style="color:var(--text-muted)">{{ doctor.title }}</p>
+      {% if doctor.hospital %}<p style="color:var(--text-light);font-size:.9rem;margin-top:4px">{{ doctor.hospital }}</p>{% endif %}
+      {% if doctor.department %}
+      <span class="badge badge-confirmed" style="margin-top:8px">{{ doctor.department.name }}</span>
+      {% endif %}
       <div class="doctor-stats" style="margin-top:16px">
         <div class="doctor-stat-item"><strong>{{ review_count }}</strong><span>评价</span></div>
         <div class="doctor-stat-item"><strong>{{ avg_rating }}</strong><span>评分</span></div>
         <div class="doctor-stat-item"><strong>128</strong><span>接诊</span></div>
       </div>
-      <button class="btn btn-primary btn-block mt-4" onclick="showBookModal({{ doctor.id }}, '{{ doctor.name }}')">立即预约</button>
+      <button class="btn btn-primary btn-block mt-4" onclick="showBookModal({{ doctor.id }}, '{{ doctor.name }}')">
+        ¥{{ '%.0f' % (doctor.consultation_fee or 0) }} · 立即预约
+      </button>
     </div>
   </div>
 </div>

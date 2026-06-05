@@ -52,49 +52,34 @@ def init_data():
     db.session.commit()
     print("  [2/10] 管理员账号")
 
-    # ─── 3. 医生 (40人) ───
-    doctor_names = [
-        '张伟', '李芳', '王建国', '陈晓琳', '刘大明', '赵雪梅', '孙志强',
-        '周海燕', '吴明辉', '郑雅文', '钱一鸣', '冯丽华', '褚建国', '蒋文斌',
-        '沈晓东', '韩雪晴', '杨志刚', '朱晓峰', '秦风兰', '许建平',
-        '何美玲', '吕志强', '施慧芬', '张德昌', '孔祥瑞', '曹艳玲',
-        '严国栋', '华立峰', '金玉兰', '魏志远', '陶慧敏', '姜文博',
-        '戚建国', '谢玉芬', '邹志伟', '柏晓燕', '水庆丰', '窦国华',
-        '章建华', '苏丽萍'
-    ]
-    titles = ['住院医师', '主治医师', '副主任医师', '主任医师']
-    title_weights = [3, 4, 2, 1]  # 住院:主治:副主任:主任 = 3:4:2:1
-    specialties_pool = [
-        '心血管疾病介入治疗', '糖尿病综合管理', '支气管镜诊疗', '腹腔镜微创手术',
-        '脊柱微创技术', '冠脉支架植入术', '消化道早癌筛查', '关节镜手术',
-        '儿童生长发育评估', '围产期保健', '中西医结合康复', '认知行为治疗',
-        '癫痫综合治疗', '白内障超声乳化', '牙种植修复', '银屑病生物制剂',
-        '脑血管介入取栓', '慢性肾病规范化管理', '肿瘤免疫治疗', '运动康复训练',
-        '急危重症呼吸支持', '老年综合评估', '甲状腺结节消融', '无痛胃肠镜',
-        '儿童哮喘管理', '宫腔镜微创手术', '骨折微创内固定', '过敏性皮肤病诊治',
-        '斜视矫正手术', '根管显微治疗', '针灸减肥调理', '焦虑障碍系统治疗',
-        '帕金森综合治疗', '心力衰竭CRT植入', '超声内镜检查', '肺癌靶向治疗',
-        '高尿酸痛风管理', '腹膜透析管理', '肿瘤多学科会诊', '骨关节术后康复',
-    ]
+    # ─── 3. 医生 (106位知名医生，带详细简历) ───
+    from doctor_data import ALL_DOCTORS
     doctors = []
-    for i, (name,) in enumerate([(n,) for n in doctor_names]):
-        dept = random.choice(departments)
-        title = random.choices(titles, weights=title_weights, k=1)[0]
-        fee_map = {'住院医师': 10, '主治医师': 20, '副主任医师': 35, '主任医师': 50}
-        phone = f'139{random.randint(10000000, 99999999)}'
+    for dd in ALL_DOCTORS:
+        dept = Department.query.filter_by(name=dd['dept']).first()
+        if not dept:
+            dept = Department.query.first()
+        phone = f"139{random.randint(10000000,99999999)}"
         d = User(
-            name=name, phone=phone, role='doctor',
-            department_id=dept.id, title=title,
-            specialty=random.choice(specialties_pool),
-            gender=random.choice(['男', '女']),
-            age=random.randint(30, 62),
-            consultation_fee=fee_map.get(title, 15)
+            name=dd['name'], phone=phone, role='doctor',
+            department_id=dept.id, title=dd.get('title','主任医师'),
+            specialty=dd.get('specialty',''),
+            bio=dd.get('bio',''),
+            education=dd.get('education',''),
+            training=dd.get('training',''),
+            research=dd.get('research',''),
+            mentorship=dd.get('mentorship',''),
+            awards=dd.get('awards',''),
+            hospital=dd.get('hospital',''),
+            gender=random.choice(['男','女']),
+            age=random.randint(40,68),
+            consultation_fee=dd.get('fee',25)
         )
         d.set_password('123456')
         db.session.add(d)
         doctors.append(d)
     db.session.commit()
-    print(f"  [3/10] {len(doctors)} 位医生 ({len(titles)}级职称体系)")
+    print(f"  [3/10] {len(doctors)} 位知名医生(含详细简历)")
 
     # ─── 4. 患者 (80人) ───
     surnames = '赵钱孙李周吴郑王冯陈褚卫蒋沈韩杨朱秦尤许何吕施张孔曹严华金魏陶姜戚谢邹柏水窦章苏'

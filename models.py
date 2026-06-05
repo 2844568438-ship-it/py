@@ -42,9 +42,15 @@ class User(UserMixin, db.Model):
 
     # 医生专用字段
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'), nullable=True)
-    title = db.Column(db.String(64))        # 职称：主任医师/副主任医师/主治医师
-    specialty = db.Column(db.Text)           # 擅长领域
-    bio = db.Column(db.Text)                 # 个人简介
+    title = db.Column(db.String(64))             # 职称
+    specialty = db.Column(db.Text)               # 擅长领域
+    bio = db.Column(db.Text)                     # 个人简介
+    education = db.Column(db.Text)               # 教育背景 JSON
+    training = db.Column(db.Text)                # 规培/进修经历 JSON
+    research = db.Column(db.Text)                # 科研方向与成果
+    mentorship = db.Column(db.String(64))        # 导师类型
+    awards = db.Column(db.Text)                  # 获奖与荣誉
+    hospital = db.Column(db.String(128))         # 所在医院
     consultation_fee = db.Column(db.Float, default=0.0)
 
     def set_password(self, password):
