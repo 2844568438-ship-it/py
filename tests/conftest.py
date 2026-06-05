@@ -23,11 +23,16 @@ def app():
 
     from models import db as _db
     from flask_login import LoginManager
+    from flask_wtf.csrf import CSRFProtect
 
-    app = Flask(__name__)
+    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    template_dir = os.path.join(project_dir, 'templates')
+    static_dir = os.path.join(project_dir, 'static')
+    app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
     app.config.from_object(TestConfig)
 
     _db.init_app(app)
+    CSRFProtect(app)
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'

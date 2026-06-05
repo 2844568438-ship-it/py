@@ -2,22 +2,20 @@
 {% block title %}账单详情 #{{ bill.id }} - 医联通{% endblock %}
 {% block content %}
 <div class="page-header">
-  <h2>账单详情 #{{ bill.id }}</h2>
-  <a href="{{ url_for('patient.bills') }}" class="btn btn-ghost">← 返回</a>
+  <h1>账单详情 #{{ bill.id }}</h1>
+  <a href="{{ url_for('patient.bills') }}" class="btn btn-outline btn-sm">← 返回</a>
 </div>
 <div class="card">
-  <div class="card-body">
-    <div class="bill-info">
-      <div class="info-row"><span class="label">状态</span><span class="badge badge-{{ 'success' if bill.status=='paid' else 'warning' }}">{{ {'unpaid':'待支付','paid':'已支付','refunded':'已退款'}.get(bill.status) }}</span></div>
-      <div class="info-row"><span class="label">就诊医生</span><span>{{ bill.consultation.doctor.name if bill.consultation else '-' }}</span></div>
-      <div class="info-row"><span class="label">创建时间</span><span>{{ bill.created_at.strftime('%Y-%m-%d %H:%M') }}</span></div>
-      {% if bill.status == 'paid' %}
-      <div class="info-row"><span class="label">支付方式</span><span>{{ {'cash':'现金','wechat':'微信支付','alipay':'支付宝','insurance':'医保'}.get(bill.payment_method, bill.payment_method) }}</span></div>
-      <div class="info-row"><span class="label">支付时间</span><span>{{ bill.paid_at.strftime('%Y-%m-%d %H:%M') if bill.paid_at else '-' }}</span></div>
-      {% endif %}
-    </div>
-    <hr>
-    <h4>费用明细</h4>
+  <div style="margin-bottom:20px">
+    <p style="font-size:.9rem;color:var(--text-light);margin-bottom:6px"><strong>状态：</strong><span class="badge {{ 'badge-completed' if bill.status=='paid' else 'badge-pending' }}">{{ {'unpaid':'待支付','paid':'已支付','refunded':'已退款'}.get(bill.status) }}</span></p>
+    <p style="font-size:.9rem;color:var(--text-light);margin-bottom:6px"><strong>就诊医生：</strong>{{ bill.consultation.doctor.name if bill.consultation else '-' }}</p>
+    <p style="font-size:.9rem;color:var(--text-light);margin-bottom:6px"><strong>创建时间：</strong>{{ bill.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+    {% if bill.status == 'paid' %}
+    <p style="font-size:.9rem;color:var(--text-light);margin-bottom:6px"><strong>支付方式：</strong>{{ {'cash':'现金','wechat':'微信支付','alipay':'支付宝','insurance':'医保'}.get(bill.payment_method, bill.payment_method) }}</p>
+    <p style="font-size:.9rem;color:var(--text-light);margin-bottom:6px"><strong>支付时间：</strong>{{ bill.paid_at.strftime('%Y-%m-%d %H:%M') if bill.paid_at else '-' }}</p>
+    {% endif %}
+  </div>
+  <h3 style="margin-bottom:12px">费用明细</h3>
     <table class="table">
       <thead><tr><th>项目</th><th>类型</th><th>数量</th><th>单价</th><th>小计</th></tr></thead>
       <tbody>
@@ -36,10 +34,12 @@
     {% if bill.status == 'unpaid' %}
     <div style="margin-top:20px;display:flex;gap:10px;justify-content:flex-end">
       <form method="POST" action="{{ url_for('patient.pay_bill', bill_id=bill.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="payment_method" value="wechat">
         <button class="btn btn-success" onclick="return confirm('确认支付？')">微信支付</button>
       </form>
       <form method="POST" action="{{ url_for('patient.pay_bill', bill_id=bill.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="payment_method" value="alipay">
         <button class="btn btn-primary" onclick="return confirm('确认支付？')">支付宝支付</button>
       </form>

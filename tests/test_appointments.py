@@ -67,7 +67,7 @@ def test_doctors_page(client):
     assert resp.status_code == 200
 
 
-def test_doctor_detail_page(client):
+def test_doctor_detail_page(client, db):
     """医生详情页"""
     login_patient(client)
     doctor = User.query.filter_by(role='doctor').first()

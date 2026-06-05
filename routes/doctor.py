@@ -229,7 +229,8 @@ def queue():
         appointment_date=today, status='confirmed')\
         .order_by(Appointment.queue_number.asc()).all()
     current_idx = request.args.get('current', type=int, default=0)
-    return render_template('doctor/queue.html', queue_list=queue_list, current_idx=current_idx)
+    return render_template('doctor/queue.html', queue_list=queue_list,
+                           current_idx=current_idx, today=today)
 
 @doctor_bp.route('/call_next/<int:appt_id>', methods=['POST'])
 @login_required

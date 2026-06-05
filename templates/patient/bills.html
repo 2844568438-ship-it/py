@@ -1,39 +1,41 @@
 {% extends "base.html" %}
 {% block title %}我的账单 - 医联通{% endblock %}
 {% block content %}
-<div class="page-header">
-  <h2>我的账单</h2>
-</div>
+<div class="page-header"><h1>我的账单</h1><p>查看和管理您的医疗费用</p></div>
 <div class="card">
-  <div class="card-body">
-    {% if bills %}
-    <div class="table-wrap">
-      <table class="table">
-        <thead><tr><th>账单号</th><th>问诊医生</th><th>金额</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
-        <tbody>
-        {% for b in bills %}
-        <tr>
-          <td><strong>#{{ b.id }}</strong></td>
-          <td>{{ b.consultation.doctor.name if b.consultation else '-' }}</td>
-          <td class="price">&yen;{{ '%.2f' % b.total_amount }}</td>
-          <td><span class="badge badge-{{ 'success' if b.status=='paid' else 'warning' if b.status=='unpaid' else 'info' }}">{{ {'unpaid':'待支付','paid':'已支付','refunded':'已退款'}.get(b.status, b.status) }}</span></td>
-          <td>{{ b.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-          <td><a href="{{ url_for('patient.bill_detail', bill_id=b.id) }}" class="btn btn-sm btn-primary">查看</a>
-            {% if b.status == 'unpaid' %}
-            <form method="POST" action="{{ url_for('patient.pay_bill', bill_id=b.id) }}" style="display:inline">
-              <input type="hidden" name="payment_method" value="wechat">
-              <button class="btn btn-sm btn-success" onclick="return confirm('确认支付 ¥{{ '%.2f' % b.total_amount }}？')">支付</button>
-            </form>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <div class="empty-state">暂无账单记录</div>
-    {% endif %}
+  {% if bills %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>账单号</th><th>问诊医生</th><th>金额</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+      <tbody>
+      {% for b in bills %}
+      <tr>
+        <td><strong>#{{ b.id }}</strong></td>
+        <td>{{ b.consultation.doctor.name if b.consultation else '-' }}</td>
+        <td style="color:var(--danger);font-weight:700">&yen;{{ '%.2f' % b.total_amount }}</td>
+        <td><span class="badge {{ 'badge-completed' if b.status=='paid' else 'badge-pending' }}">{{ {'unpaid':'待支付','paid':'已支付','refunded':'已退款'}.get(b.status, b.status) }}</span></td>
+        <td>{{ b.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>
+          <a href="{{ url_for('patient.bill_detail', bill_id=b.id) }}" class="btn btn-sm btn-outline">查看</a>
+          {% if b.status == 'unpaid' %}
+          <form method="POST" action="{{ url_for('patient.pay_bill', bill_id=b.id) }}" style="display:inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="payment_method" value="wechat">
+            <button class="btn btn-sm btn-success" onclick="return confirm('确认支付 ¥{{ '%.2f' % b.total_amount }}？')">支付</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
   </div>
+  {% else %}
+  <div class="empty-state">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    <h3>暂无账单</h3>
+    <p>完成问诊后，账单会自动生成</p>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

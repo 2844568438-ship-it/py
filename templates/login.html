@@ -11,6 +11,7 @@
       <p>在线医疗问诊平台</p>
     </div>
     <form method="POST" class="auth-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-group">
         <label>手机号</label>
         <input type="text" name="phone" placeholder="请输入手机号" required>
