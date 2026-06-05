@@ -176,6 +176,7 @@ def prescribe(consult_id):
     if medicine_id:
         med = Medicine.query.get(medicine_id)
         if med:
+            total_price = med.price * quantity
             p = Prescription(
                 consultation_id=consult_id,
                 patient_id=consult.patient_id,
@@ -184,10 +185,26 @@ def prescribe(consult_id):
                 specification=med.specification,
                 dosage=dosage,
                 quantity=quantity,
-                price=med.price * quantity,
+                price=total_price,
                 notes=notes
             )
             db.session.add(p)
+            # 同步更新账单
+            bill = Bill.query.filter_by(consultation_id=consult_id).first()
+            if not bill:
+                bill = Bill(patient_id=consult.patient_id, consultation_id=consult_id, total_amount=0, status='unpaid')
+                db.session.add(bill)
+                db.session.flush()
+                fee = current_user.consultation_fee or 0
+                if fee > 0:
+                    db.session.add(BillItem(bill_id=bill.id, item_type='consultation_fee',
+                                   item_name='诊查费', quantity=1, unit_price=fee, subtotal=fee))
+                    bill.total_amount += fee
+            db.session.flush()
+            db.session.add(BillItem(bill_id=bill.id, item_type='medicine',
+                           item_name=med.name, quantity=quantity,
+                           unit_price=med.price, subtotal=total_price))
+            bill.total_amount += total_price
             db.session.commit()
             flash('处方已添加', 'success')
     return redirect(url_for('doctor.consult', appt_id=consult.appointment_id))

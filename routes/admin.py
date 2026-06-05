@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Department, User, Appointment, Consultation, Prescription, Medicine, Announcement
+from models import db, Department, User, Appointment, Consultation, Prescription, Medicine, Announcement, Bill, BillItem
 from datetime import datetime, date, timedelta
 from collections import Counter
 
@@ -60,10 +60,20 @@ def dashboard():
     status_labels = [status_map.get(s[0], s[0]) for s in status_stats]
     status_values = [s[1] for s in status_stats]
 
+    # 财务统计
+    total_revenue = db.session.query(db.func.sum(Bill.total_amount))\
+        .filter(Bill.status == 'paid').scalar() or 0
+    today_revenue = db.session.query(db.func.sum(Bill.total_amount))\
+        .filter(Bill.status == 'paid', Bill.paid_at >= today.strftime('%Y-%m-%d')).scalar() or 0
+    unpaid_count = Bill.query.filter_by(status='unpaid').count()
+    low_stock = Medicine.query.filter(Medicine.stock < 20).count()
+
     return render_template('admin/dashboard.html',
         total_appts=total_appts, today_appts=today_appts,
         today_consults=today_consults, today_prescriptions=today_prescriptions,
         total_patients=total_patients, total_doctors=total_doctors,
+        total_revenue=total_revenue, today_revenue=today_revenue,
+        unpaid_count=unpaid_count, low_stock=low_stock,
         dept_labels=dept_labels, dept_values=dept_values,
         trend_labels=trend_labels, trend_values=trend_values,
         top_doctors=top_doctors,
@@ -254,3 +264,53 @@ def delete_announcement(ann_id):
     db.session.commit()
     flash('公告已删除', 'info')
     return redirect(url_for('admin.announcements'))
+
+# ─── 账单管理 ─────────────────────────────────
+@admin_bp.route('/bills')
+@login_required
+def bills():
+    err = admin_required()
+    if err: return err
+    filter_status = request.args.get('status', '')
+    query = Bill.query
+    if filter_status:
+        query = query.filter_by(status=filter_status)
+    bills = query.order_by(Bill.created_at.desc()).limit(200).all()
+    return render_template('admin/bills.html', bills=bills, filter_status=filter_status)
+
+@admin_bp.route('/bill/<int:bill_id>')
+@login_required
+def bill_detail(bill_id):
+    err = admin_required()
+    if err: return err
+    bill = Bill.query.get_or_404(bill_id)
+    items = BillItem.query.filter_by(bill_id=bill_id).all()
+    return render_template('admin/bill_detail.html', bill=bill, items=items)
+
+# ─── 发药管理 ─────────────────────────────────
+@admin_bp.route('/pharmacy')
+@login_required
+def pharmacy():
+    err = admin_required()
+    if err: return err
+    prescriptions = Prescription.query.order_by(Prescription.created_at.desc()).limit(200).all()
+    return render_template('admin/pharmacy.html', prescriptions=prescriptions)
+
+@admin_bp.route('/pharmacy/dispense/<int:prescription_id>', methods=['POST'])
+@login_required
+def pharmacy_dispense(prescription_id):
+    p = Prescription.query.get_or_404(prescription_id)
+    if p.status == 'dispensed':
+        flash('已发药', 'info')
+        return redirect(url_for('admin.pharmacy'))
+    med = Medicine.query.filter_by(name=p.medicine_name).first()
+    if med:
+        if med.stock < p.quantity:
+            flash(f'{med.name} 库存不足', 'error')
+            return redirect(url_for('admin.pharmacy'))
+        med.stock -= p.quantity
+    p.status = 'dispensed'
+    p.dispensed_at = datetime.utcnow()
+    db.session.commit()
+    flash(f'{p.medicine_name} 发药成功', 'success')
+    return redirect(url_for('admin.pharmacy'))
