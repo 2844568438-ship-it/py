@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, Response
 from flask_login import login_user, logout_user, login_required, current_user
 from models import db, User
-import requests as req
+from urllib.request import urlopen, Request
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -18,8 +18,9 @@ def proxy_img(name):
     if not url:
         return '', 404
     try:
-        r = req.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=15)
-        return Response(r.content, mimetype=r.headers.get('content-type','image/jpeg'))
+        rq = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        r = urlopen(rq, timeout=15)
+        return Response(r.read(), mimetype=r.headers.get('Content-Type','image/jpeg'))
     except:
         return '', 502
 
