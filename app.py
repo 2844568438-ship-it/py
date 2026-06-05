@@ -29,6 +29,7 @@ def create_app():
     from routes.admin import admin_bp
 
     app.register_blueprint(auth_bp)
+    csrf.exempt(auth_bp)  # 登录/注册不需要CSRF
     app.register_blueprint(patient_bp)
     app.register_blueprint(doctor_bp)
     app.register_blueprint(admin_bp)
