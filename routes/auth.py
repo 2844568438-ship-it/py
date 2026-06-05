@@ -1,8 +1,27 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, Response
 from flask_login import login_user, logout_user, login_required, current_user
 from models import db, User
+import requests as req
 
 auth_bp = Blueprint('auth', __name__)
+
+# 图片代理——中转Wikipedia真实医生照片
+WIKI_IMAGES = {
+    '钟南山': 'https://upload.wikimedia.org/wikipedia/commons/9/9d/Zhong_Nanshan_2020.jpg',
+    '李兰娟': 'https://upload.wikimedia.org/wikipedia/commons/5/5f/Li_Lanjuan_at_the_2020_CPPCC.jpg',
+    '张文宏': 'https://upload.wikimedia.org/wikipedia/commons/4/4f/Zhang_Wenhong.jpg',
+}
+
+@auth_bp.route('/proxy_img/<name>')
+def proxy_img(name):
+    url = WIKI_IMAGES.get(name)
+    if not url:
+        return '', 404
+    try:
+        r = req.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=15)
+        return Response(r.content, mimetype=r.headers.get('content-type','image/jpeg'))
+    except:
+        return '', 502
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
