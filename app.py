@@ -38,6 +38,10 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        # 首次启动自动初始化数据
+        if not User.query.filter_by(role='admin').first():
+            from seed import init_data
+            init_data()
 
     return app
 
