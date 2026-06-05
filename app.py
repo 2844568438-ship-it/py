@@ -44,6 +44,9 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        if not User.query.filter_by(role='admin').first():
+            from seed import init_data
+            init_data()
 
     return app
 
