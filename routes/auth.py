@@ -5,11 +5,11 @@ from urllib.request import urlopen, Request
 
 auth_bp = Blueprint('auth', __name__)
 
-# 图片代理——中转Wikipedia真实医生照片
+# 图片代理——中转Wikipedia真实医生照片（Special:FilePath自动重定向到最新图片版本）
 WIKI_IMAGES = {
-    '钟南山': 'https://upload.wikimedia.org/wikipedia/commons/9/9d/Zhong_Nanshan_2020.jpg',
-    '李兰娟': 'https://upload.wikimedia.org/wikipedia/commons/5/5f/Li_Lanjuan_at_the_2020_CPPCC.jpg',
-    '张文宏': 'https://upload.wikimedia.org/wikipedia/commons/4/4f/Zhang_Wenhong.jpg',
+    '钟南山': 'https://commons.wikimedia.org/wiki/Special:FilePath/Zhong_Nanshan_(cropped).jpg',
+    '李兰娟': 'https://commons.wikimedia.org/wiki/Special:FilePath/%E6%9D%8E%E5%85%B0%E5%A8%9F%E9%99%A2%E5%A3%AB.jpg',
+    '张文宏': 'https://commons.wikimedia.org/wiki/Special:FilePath/Zhang_Wenhong.jpg',
 }
 
 @auth_bp.route('/proxy_img/<name>')

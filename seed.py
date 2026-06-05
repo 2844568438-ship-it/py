@@ -55,7 +55,7 @@ def init_data():
     # ─── 3. 医生 (106位知名医生，带详细简历) ───
     from doctor_data import ALL_DOCTORS
     doctors = []
-    for dd in ALL_DOCTORS:
+    for i, dd in enumerate(ALL_DOCTORS):
         dept = Department.query.filter_by(name=dd['dept']).first()
         if not dept:
             dept = Department.query.first()
@@ -71,8 +71,7 @@ def init_data():
             mentorship=dd.get('mentorship',''),
             awards=dd.get('awards',''),
             hospital=dd.get('hospital',''),
-            wiki_url = f"/proxy_img/{dd['name']}"
-            avatar=wiki_url if dd['name'] in ['钟南山','李兰娟','张文宏'] else f"/static/uploads/doctors/d{i%7}.jpg"
+            avatar = f"/proxy_img/{dd['name']}" if dd['name'] in ['钟南山','李兰娟','张文宏'] else '',
             gender=random.choice(['男','女']),
             age=random.randint(40,68),
             consultation_fee=dd.get('fee',25)
