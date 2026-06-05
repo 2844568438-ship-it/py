@@ -44,7 +44,12 @@ def create_app():
 
     with app.app_context():
         db.create_all()
-        if not User.query.filter_by(role='admin').first():
+        # 如果有新模型字段或医生数不够，重新初始化
+        doctor_count = User.query.filter_by(role='doctor').count()
+        if doctor_count < 50:
+            if doctor_count > 0:
+                db.drop_all()
+                db.create_all()
             from seed import init_data
             init_data()
 

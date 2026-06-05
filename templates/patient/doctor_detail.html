@@ -88,7 +88,7 @@
   <!-- 右侧卡片 -->
   <div>
     <div class="card" style="text-align:center">
-      <div class="doctor-avatar-lg" style="margin:0 auto 16px;width:80px;height:80px;font-size:30px">{{ doctor.name[0] }}</div>
+      {% if doctor.avatar %}<img src="{{ doctor.avatar }}" alt="{{ doctor.name }}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;margin:0 auto 16px;display:block;box-shadow:0 8px 24px rgba(37,99,235,.3)">{% else %}<div class="doctor-avatar-lg" style="margin:0 auto 16px;width:80px;height:80px;font-size:30px">{{ doctor.name[0] }}</div>{% endif %}
       <h3>{{ doctor.name }}</h3>
       <p style="color:var(--text-muted)">{{ doctor.title }}</p>
       {% if doctor.hospital %}<p style="color:var(--text-light);font-size:.9rem;margin-top:4px">{{ doctor.hospital }}</p>{% endif %}
