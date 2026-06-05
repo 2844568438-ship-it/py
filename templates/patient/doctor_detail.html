@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ doctor.name }} - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="breadcrumb"><a href="{{ url_for('patient.doctors') }}">找医生</a> / {{ doctor.name }}</div>
+    <h1>{{ doctor.name }}</h1>
+    <p>{{ doctor.title or '医生' }} · {{ doctor.department.name }}</p>
+  </div>
+  <button class="btn btn-primary" onclick="showBookModal({{ doctor.id }}, '{{ doctor.name }}')">预约挂号</button>
+</div>
+
+<div class="consult-layout" style="margin-top:20px">
+  <div>
+    <div class="card mb-4">
+      <h3 style="margin-bottom:16px">擅长领域</h3>
+      <div class="doctor-tags">
+        {% for t in (doctor.specialty or '').replace('、',',').split(',') %}
+        <span class="doctor-tag" style="font-size:.9rem;padding:8px 14px">{{ t.strip() }}</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <h3 style="margin-bottom:16px">医生简介</h3>
+      <p style="color:var(--text-light);line-height:1.8">{{ doctor.bio or '暂无简介' }}</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>患者评价 ({{ review_count }})</h3></div>
+      {% if reviews %}
+      <div class="review-list">
+        {% for r in reviews %}
+        <div class="review-item">
+          <div class="review-header">
+            <span class="review-patient">{{ r.patient.name }} <span style="font-size:.8rem;color:var(--text-muted);margin-left:8px">{{ r.created_at.strftime('%Y-%m-%d') }}</span></span>
+            <span class="stars">{% for i in range(5) %}<svg viewBox="0 0 24 24" width="14" height="14" style="fill:{{ '#f59e0b' if i < r.rating else '#e2e8f0' }}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{% endfor %}</span>
+          </div>
+          {% if r.content %}<div class="review-body">{{ r.content }}</div>{% endif %}
+          {% if r.tags %}<div class="review-tags">{% for t in r.tags.split(',') %}<span class="review-tag">{{ t.strip() }}</span>{% endfor %}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><p>暂无评价</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="consult-side">
+    <div class="card" style="text-align:center">
+      <div class="doctor-avatar-lg" style="margin:0 auto 16px;width:80px;height:80px;font-size:30px">{{ doctor.name[0] }}</div>
+      <h3>{{ doctor.name }}</h3>
+      <p style="color:var(--text-muted)">{{ doctor.title or '医生' }}</p>
+      <div class="doctor-stats" style="margin-top:16px">
+        <div class="doctor-stat-item"><strong>{{ review_count }}</strong><span>评价</span></div>
+        <div class="doctor-stat-item"><strong>{{ avg_rating }}</strong><span>评分</span></div>
+        <div class="doctor-stat-item"><strong>128</strong><span>接诊</span></div>
+      </div>
+      <button class="btn btn-primary btn-block mt-4" onclick="showBookModal({{ doctor.id }}, '{{ doctor.name }}')">立即预约</button>
+    </div>
+  </div>
+</div>
+
+{% include "patient/_book_modal.html" %}
+{% endblock %}

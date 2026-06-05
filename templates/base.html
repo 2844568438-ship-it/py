@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}医联通 - 在线医疗问诊平台{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <a href="{{ url_for('auth.index') }}" class="brand-link">
+          <div class="brand-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          </div>
+          <span class="brand-text">医联通</span>
+        </a>
+      </div>
+      <nav class="sidebar-nav">
+        {% if current_user.is_authenticated %}
+          {% if current_user.is_admin() %}
+            {% include "admin/_nav.html" %}
+          {% elif current_user.is_doctor() %}
+            {% include "doctor/_nav.html" %}
+          {% else %}
+            {% include "patient/_nav.html" %}
+          {% endif %}
+        {% endif %}
+      </nav>
+      <div class="sidebar-footer">
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('auth.logout') }}" class="sidebar-logout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          退出登录
+        </a>
+        {% endif %}
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 顶部栏 -->
+      <header class="topbar">
+        <button class="menu-toggle" onclick="toggleSidebar()" aria-label="菜单">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-center">
+          {% if current_user.is_authenticated and current_user.is_patient() %}
+          <div class="topbar-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="搜索医生、科室、症状..." onkeydown="if(event.key==='Enter')location.href='{{ url_for('patient.doctors') }}?search='+this.value">
+          </div>
+          {% endif %}
+        </div>
+        <div class="topbar-right">
+          {% if current_user.is_authenticated %}
+          <div class="notify-btn" id="notifyBtn" title="消息通知">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <span class="notify-dot"></span>
+            <div class="notify-dropdown" id="notifyDropdown">
+              <div class="notify-item unread"><h4>预约确认通知</h4><p>您的预约已被张伟医生确认</p><time>今天 09:30</time></div>
+              <div class="notify-item"><h4>处方已开具</h4><p>您的处方已生成，请查看详情</p><time>昨天 15:20</time></div>
+              <div class="notify-item"><h4>系统公告</h4><p>2026年夏季门诊时间调整通知</p><time>06-01</time></div>
+            </div>
+          </div>
+          <div class="topbar-user">
+            <div class="user-avatar">{{ current_user.name[0] }}</div>
+            <div class="user-info">
+              <span class="user-name">{{ current_user.name }}</span>
+              <span class="user-role">
+                {% if current_user.is_admin() %}管理员{% elif current_user.is_doctor() %}{{ current_user.title or '医生' }}{% else %}患者{% endif %}
+              </span>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </header>
+
+      <!-- 公告栏 -->
+      {% if pinned_announcements %}
+      <div class="announce-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <marquee behavior="scroll" direction="left" scrollamount="3">
+          {% for ann in pinned_announcements %}
+            【{{ ann.title }}】{{ ann.content | truncate(80) }} &nbsp;&nbsp;&nbsp;
+          {% endfor %}
+        </marquee>
+      </div>
+      {% endif %}
+
+      <!-- Flash 消息 -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-container">
+          {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()">&times;</button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- 页面内容 -->
+      <div class="page-content">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+  </script>
+</body>
+</html>

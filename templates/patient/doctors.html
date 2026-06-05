@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}找医生 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="breadcrumb">首页 / 找医生</div>
+    <h1>选择医生</h1>
+    <p>浏览科室，选择医生，在线预约挂号</p>
+  </div>
+</div>
+
+<!-- 筛选 + 搜索 -->
+<div class="flex-between mb-4" style="flex-wrap:wrap;gap:12px">
+  <div class="filter-tabs">
+    <a href="?dept_id=0" class="filter-tab {{ 'active' if not current_dept }}">全部科室</a>
+    {% for d in departments %}
+    <a href="?dept_id={{ d.id }}" class="filter-tab {{ 'active' if current_dept == d.id }}">{{ d.name }}</a>
+    {% endfor %}
+  </div>
+  <form class="search-bar" method="GET">
+    <input type="hidden" name="dept_id" value="{{ current_dept or '' }}">
+    <input type="text" name="search" placeholder="搜索医生姓名或擅长领域..." value="{{ search }}" style="width:240px">
+    <button type="submit" class="btn btn-primary btn-sm">搜索</button>
+  </form>
+</div>
+
+<!-- 医生卡片 -->
+{% if doctors %}
+<div class="doctor-grid">
+  {% for d in doctors %}
+  <div class="doctor-card card" onclick="location.href='{{ url_for('patient.doctor_detail', doc_id=d.id) }}'">
+    <div class="doctor-card-top">
+      <div class="doctor-avatar-lg">{{ d.name[0] }}</div>
+      <div class="doctor-card-info">
+        <h3>{{ d.name }} <span class="stars">{% for i in range(5) %}{% if i < (d.avg_rating|default(4.5)|round(0,'floor')) %}<svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{% else %}<svg viewBox="0 0 24 24" class="empty"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>{% endif %}{% endfor %}</span></h3>
+        <span class="title">{{ d.title or '医生' }}</span>
+        <div class="dept">{{ d.department.name }}</div>
+      </div>
+    </div>
+    <div class="doctor-stats">
+      <div class="doctor-stat-item"><strong>{{ d.review_count|default(0) }}</strong><span>患者评价</span></div>
+      <div class="doctor-stat-item"><strong>{{ d.consult_count|default(128) }}</strong><span>接诊量</span></div>
+      <div class="doctor-stat-item"><strong>{{ d.avg_rating|default(4.5) }}</strong><span>好评率</span></div>
+    </div>
+    <div class="doctor-tags">
+      {% set tags = (d.specialty or '').replace('、',',').split(',') %}
+      {% for t in tags[:3] %}
+      <span class="doctor-tag">{{ t.strip() }}</span>
+      {% endfor %}
+    </div>
+    <div class="doctor-card-actions" onclick="event.stopPropagation()">
+      <button class="btn btn-primary btn-sm btn-block" onclick="showBookModal({{ d.id }}, '{{ d.name }}')">预约挂号</button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  <h3>暂无符合条件的医生</h3>
+  <p>试试其他科室或搜索关键词</p>
+</div>
+{% endif %}
+
+<!-- 预约弹窗 -->
+<div class="modal" id="bookModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>预约挂号 - <span id="bookDoctorName"></span></h3>
+      <button class="modal-close" onclick="closeBookModal()">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('patient.book') }}">
+      <input type="hidden" name="doctor_id" id="bookDoctorId">
+      <div class="form-group"><label>就诊日期</label><input type="date" name="date" id="bookDate" required></div>
+      <div class="form-group"><label>就诊时段</label>
+        <select name="time_slot" required>
+          <option value="">请选择时段</option>
+          <option>08:00-09:00</option><option>09:00-10:00</option><option>10:00-11:00</option>
+          <option>11:00-12:00</option><option>14:00-15:00</option><option>15:00-16:00</option>
+          <option>16:00-17:00</option>
+        </select>
+      </div>
+      <div class="form-group"><label>病情描述</label><textarea name="description" rows="3" placeholder="请简要描述您的症状..." required></textarea></div>
+      <button type="submit" class="btn btn-primary btn-block">确认预约</button>
+    </form>
+  </div>
+</div>
+<script>document.addEventListener('DOMContentLoaded',function(){var d=new Date();var min=d.toISOString().split('T')[0];var max=new Date(d.getTime()+7*86400000).toISOString().split('T')[0];var el=document.getElementById('bookDate');if(el){el.min=min;el.max=max}})</script>
+{% endblock %}

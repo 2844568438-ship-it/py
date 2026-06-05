@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}接诊 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>接诊</h1>
+  <p>患者：{{ appointment.patient.name }} · {{ appointment.patient.gender }} · {{ appointment.patient.age }}岁</p>
+  <p class="text-muted">病情描述：{{ appointment.description }}</p>
+</div>
+
+<div class="consult-layout">
+  <!-- 对话区 -->
+  <div class="consult-chat card">
+    <div class="consult-messages" id="chatMessages">
+      {% for msg in messages %}
+      <div class="chat-msg {{ 'chat-msg-self' if msg.sender_id == current_user.id else 'chat-msg-other' }}">
+        <div class="chat-bubble">
+          <div class="chat-sender">{{ msg.sender.name }}</div>
+          <div class="chat-text">{{ msg.content }}</div>
+          <div class="chat-time">{{ msg.created_at.strftime('%H:%M') }}</div>
+        </div>
+      </div>
+      {% endfor %}
+      {% if not messages %}
+      <div class="empty-state"><p>开始问诊对话...</p></div>
+      {% endif %}
+    </div>
+    {% if consultation.status == 'ongoing' %}
+    <form class="consult-input" onsubmit="sendMsg(event)">
+      <input type="text" id="chatInput" placeholder="输入回复..." autocomplete="off">
+      <button type="submit" class="btn btn-primary">发送</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <!-- 操作面板 -->
+  <div class="consult-side">
+    <!-- 诊断表单 -->
+    <div class="card mb-3">
+      <h3>{% if consultation.diagnosis %}诊断结果（已完成）{% else %}填写诊断{% endif %}</h3>
+      <form method="POST" action="{{ url_for('doctor.diagnose', consult_id=consultation.id) }}">
+        <div class="form-group">
+          <label>诊断结果</label>
+          <textarea name="diagnosis" rows="2" placeholder="请输入诊断结果..." {{ 'readonly' if consultation.diagnosis }}>{{ consultation.diagnosis or '' }}</textarea>
+        </div>
+        <div class="form-group">
+          <label>医嘱</label>
+          <textarea name="advice" rows="2" placeholder="请输入医嘱建议..." {{ 'readonly' if consultation.diagnosis }}>{{ consultation.advice or '' }}</textarea>
+        </div>
+        {% if not consultation.diagnosis %}
+        <button type="submit" class="btn btn-success btn-block">完成诊断</button>
+        {% endif %}
+      </form>
+    </div>
+
+    <!-- 开处方 -->
+    <div class="card mb-3">
+      <h3>开处方</h3>
+      <form method="POST" action="{{ url_for('doctor.prescribe', consult_id=consultation.id) }}">
+        <div class="form-group">
+          <label>选择药品</label>
+          <select name="medicine_id">
+            <option value="">自定义药品</option>
+            {% for m in medicines %}
+            <option value="{{ m.id }}">{{ m.name }} ({{ m.specification }}) ¥{{ '%.2f'|format(m.price) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>用法用量</label>
+          <input type="text" name="dosage" placeholder="如：每日3次，每次1片，饭后服用">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>数量</label>
+            <input type="number" name="quantity" value="1" min="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>备注</label>
+          <input type="text" name="notes" placeholder="注意事项...">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">添加处方</button>
+      </form>
+    </div>
+
+    <!-- 已开处方 -->
+    {% if prescriptions %}
+    <div class="card">
+      <h3>已开处方</h3>
+      {% for p in prescriptions %}
+      <div class="prescription-item">
+        <strong>{{ p.medicine_name }}</strong>
+        <p>{{ p.specification or '' }} × {{ p.quantity }}</p>
+        <p>{{ p.dosage or '' }}</p>
+        <p>¥{{ '%.2f' | format(p.price) }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  function sendMsg(e) {
+    e.preventDefault();
+    const input = document.getElementById('chatInput');
+    const content = input.value.trim();
+    if (!content) return;
+    fetch('{{ url_for("doctor.send_message", consult_id=consultation.id) }}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'content=' + encodeURIComponent(content)
+    }).then(r => r.json()).then(data => { if (data.ok) location.reload(); });
+  }
+</script>
+{% endblock %}

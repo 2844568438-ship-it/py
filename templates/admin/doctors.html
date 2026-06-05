@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}医生管理 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>医生管理</h1>
+  <button class="btn btn-primary" onclick="document.getElementById('addDocModal').classList.add('active')">+ 添加医生</button>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead><tr><th>姓名</th><th>手机号</th><th>科室</th><th>职称</th><th>擅长</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for d in doctors %}
+      <tr>
+        <td><strong>{{ d.name }}</strong></td>
+        <td>{{ d.phone }}</td>
+        <td>{{ d.department.name }}</td>
+        <td>{{ d.title or '—' }}</td>
+        <td>{{ d.specialty or '—' | truncate(30) }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin.delete_doctor', doc_id=d.id) }}" style="display:inline" onsubmit="return confirm('确定删除该医生？')">
+            <button class="btn btn-sm btn-outline" style="color:#ef4444">删除</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="modal" id="addDocModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>添加医生</h3>
+      <button class="modal-close" onclick="document.getElementById('addDocModal').classList.remove('active')">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.add_doctor') }}">
+      <div class="form-row">
+        <div class="form-group">
+          <label>姓名</label>
+          <input type="text" name="name" required>
+        </div>
+        <div class="form-group">
+          <label>手机号</label>
+          <input type="text" name="phone" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>所属科室</label>
+        <select name="department_id" required>
+          <option value="">请选择科室</option>
+          {% for d in departments %}
+          <option value="{{ d.id }}">{{ d.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>职称</label>
+        <select name="title">
+          <option value="主任医师">主任医师</option>
+          <option value="副主任医师">副主任医师</option>
+          <option value="主治医师">主治医师</option>
+          <option value="住院医师">住院医师</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>擅长领域</label>
+        <input type="text" name="specialty" placeholder="如：心血管疾病、高血压管理...">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">添加医生</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

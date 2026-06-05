@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ article.title }} - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="breadcrumb"><a href="{{ url_for('patient.articles') }}">健康科普</a> / 文章详情</div>
+    <h1>{{ article.title }}</h1>
+    <p>{{ article.author_name }} · {{ article.created_at.strftime('%Y-%m-%d') }} · {{ article.view_count }} 次阅读 · {{ article.category }}</p>
+  </div>
+</div>
+
+<div class="card">
+  <div style="max-width:800px;margin:0 auto;padding:20px 0">
+    <div style="font-size:1rem;line-height:2;color:var(--text)">
+      {{ article.content | safe }}
+    </div>
+    <div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--border);text-align:center">
+      <p style="color:var(--text-muted);font-size:.9rem">— 本文仅供健康科普参考，不能替代医生的诊断和治疗 —</p>
+      <a href="{{ url_for('patient.doctors') }}" class="btn btn-primary mt-4">如有不适，立即咨询医生 →</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

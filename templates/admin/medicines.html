@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}药品管理 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>药品管理</h1>
+  <button class="btn btn-primary" onclick="document.getElementById('addMedModal').classList.add('active')">+ 添加药品</button>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead><tr><th>药品名称</th><th>规格</th><th>厂家</th><th>类别</th><th>价格</th><th>库存</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for m in medicines %}
+      <tr>
+        <td><strong>{{ m.name }}</strong></td>
+        <td>{{ m.specification or '—' }}</td>
+        <td>{{ m.manufacturer or '—' }}</td>
+        <td>{{ m.category or '—' }}</td>
+        <td>¥{{ '%.2f'|format(m.price) }}</td>
+        <td>{{ m.stock }}</td>
+        <td>
+          <button class="btn btn-sm btn-outline" onclick="editMed({{ m.id }}, '{{ m.name }}', '{{ m.specification or '' }}', '{{ m.manufacturer or '' }}', {{ m.price }}, {{ m.stock }}, '{{ m.category or '' }}')">编辑</button>
+          <form method="POST" action="{{ url_for('admin.delete_medicine', med_id=m.id) }}" style="display:inline" onsubmit="return confirm('确定删除？')">
+            <button class="btn btn-sm btn-outline" style="color:#ef4444">删除</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- 添加弹窗 -->
+{% set modal_id = 'addMedModal' %}{% set modal_title = '添加药品' %}{% set action = url_for('admin.add_medicine') %}{% set is_edit = False %}
+{% include "admin/_med_modal.html" %}
+
+<!-- 编辑弹窗 -->
+{% set modal_id = 'editMedModal' %}{% set modal_title = '编辑药品' %}{% set action = '' %}{% set is_edit = True %}
+{% include "admin/_med_modal.html" %}
+
+<script>
+  function editMed(id, name, spec, mfr, price, stock, cat) {
+    document.getElementById('editMedForm').action = '/admin/medicine/edit/' + id;
+    document.getElementById('editMedName').value = name;
+    document.getElementById('editMedSpec').value = spec;
+    document.getElementById('editMedMfr').value = mfr;
+    document.getElementById('editMedPrice').value = price;
+    document.getElementById('editMedStock').value = stock;
+    document.getElementById('editMedCat').value = cat;
+    document.getElementById('editMedModal').classList.add('active');
+  }
+</script>
+{% endblock %}

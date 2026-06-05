@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}病历处方 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>病历与处方</h1>
+  <p>查看您的就诊记录和处方信息</p>
+</div>
+
+<!-- 问诊记录 -->
+<div class="card mb-4">
+  <div class="card-header"><h3>就诊记录</h3></div>
+  {% if consultations %}
+  <table class="table">
+    <thead><tr><th>医生</th><th>诊断</th><th>医嘱</th><th>时间</th></tr></thead>
+    <tbody>
+      {% for c in consultations %}
+      <tr>
+        <td>{{ c.doctor.name }}</td>
+        <td>{{ c.diagnosis or '—' | truncate(40) }}</td>
+        <td>{{ c.advice or '—' | truncate(40) }}</td>
+        <td>{{ c.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state"><p>暂无就诊记录</p></div>
+  {% endif %}
+</div>
+
+<!-- 处方记录 -->
+<div class="card">
+  <div class="card-header"><h3>处方记录</h3></div>
+  {% if prescriptions %}
+  <table class="table">
+    <thead><tr><th>药品</th><th>规格</th><th>用法用量</th><th>数量</th><th>金额</th><th>日期</th><th>医生</th></tr></thead>
+    <tbody>
+      {% for p in prescriptions %}
+      <tr>
+        <td>{{ p.medicine_name }}</td>
+        <td>{{ p.specification or '—' }}</td>
+        <td>{{ p.dosage or '—' }}</td>
+        <td>{{ p.quantity }}</td>
+        <td>¥{{ '%.2f' | format(p.price) }}</td>
+        <td>{{ p.created_at.strftime('%Y-%m-%d') }}</td>
+        <td>{{ p.doctor.name }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state"><p>暂无处方记录</p></div>
+  {% endif %}
+</div>
+{% endblock %}

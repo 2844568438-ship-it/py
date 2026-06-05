@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}在线问诊 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="breadcrumb">我的预约 / 在线问诊</div>
+    <h1>在线问诊</h1>
+    <p>{{ appointment.doctor.name }} · {{ appointment.doctor.title or '' }} · {{ appointment.department.name }}</p>
+  </div>
+</div>
+
+<div class="consult-layout">
+  <!-- 对话区 -->
+  <div class="consult-chat">
+    <div class="consult-chat-header">
+      <span class="status-dot"></span>
+      <div>
+        <strong>{{ appointment.doctor.name }}</strong>
+        <p style="font-size:.8rem;color:var(--text-muted)">{{ '在线接诊中' if consultation.status == 'ongoing' else '问诊已结束' }}</p>
+      </div>
+    </div>
+
+    <div class="consult-messages" id="chatMessages">
+      {% if messages %}
+      {% set last_date = namespace(val='') %}
+      {% for msg in messages %}
+      {% set cur_date = msg.created_at.strftime('%Y-%m-%d') %}
+      {% if cur_date != last_date.val %}
+      <div class="chat-date-divider"><span>{{ cur_date }}</span></div>
+      {% set last_date.val = cur_date %}
+      {% endif %}
+      <div class="chat-msg {{ 'chat-msg-self' if msg.sender_id == current_user.id else 'chat-msg-other' }}">
+        <div class="chat-bubble">
+          <div class="chat-sender">{{ msg.sender.name }}</div>
+          <div class="chat-text">{{ msg.content }}</div>
+          <div class="chat-time">{{ msg.created_at.strftime('%H:%M') }}</div>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <h3>开始问诊</h3>
+        <p>请描述您的症状，医生会为您解答</p>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if consultation.status == 'ongoing' %}
+    <div class="quick-replies">
+      <span style="font-size:.8rem;color:var(--text-muted);margin-right:4px">快捷回复：</span>
+      <span class="quick-reply" onclick="setChatInput(this.textContent)">我感觉好多了，谢谢医生</span>
+      <span class="quick-reply" onclick="setChatInput(this.textContent)">这个药怎么服用？</span>
+      <span class="quick-reply" onclick="setChatInput(this.textContent)">需要复诊吗？</span>
+      <span class="quick-reply" onclick="setChatInput(this.textContent)">饮食上有什么注意事项？</span>
+    </div>
+    <form class="consult-input" id="chatForm" onsubmit="sendMessage(event)">
+      <button type="button" class="btn-icon btn-ghost" title="图片" style="font-size:1.2rem">🖼</button>
+      <input type="text" id="chatInput" placeholder="输入您的消息..." autocomplete="off">
+      <button type="submit" class="btn btn-primary btn-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  <!-- 诊后信息 -->
+  <div class="consult-side">
+    <div class="card">
+      <h3>📋 患者信息</h3>
+      <p style="font-size:.9rem"><strong>姓名：</strong>{{ current_user.name }}</p>
+      <p style="font-size:.9rem"><strong>性别：</strong>{{ current_user.gender or '未填' }} &nbsp; <strong>年龄：</strong>{{ current_user.age or '未填' }}岁</p>
+      <p style="font-size:.9rem;margin-top:8px"><strong>病情描述：</strong>{{ appointment.description }}</p>
+    </div>
+
+    {% if consultation.diagnosis %}
+    <div class="card">
+      <h3>🏥 诊断结果</h3>
+      <p style="font-size:.9rem;line-height:1.7"><strong>诊断：</strong>{{ consultation.diagnosis }}</p>
+      {% if consultation.advice %}<p style="font-size:.9rem;line-height:1.7;margin-top:8px"><strong>医嘱：</strong>{{ consultation.advice }}</p>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if prescriptions %}
+    <div class="card">
+      <h3>💊 处方信息</h3>
+      {% for p in prescriptions %}
+      <div class="prescription-item">
+        <strong>{{ p.medicine_name }}</strong>
+        <p>{{ p.specification or '' }} × {{ p.quantity }}</p>
+        <p>{{ p.dosage or '' }}</p>
+        {% if p.notes %}<p style="font-size:.8rem;color:var(--text-muted)">{{ p.notes }}</p>{% endif %}
+        <div class="price">¥{{ '%.2f'|format(p.price) }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if consultation.status == 'completed' %}
+    <div class="card">
+      <h3>⭐ 评价医生</h3>
+      <form method="POST" action="{{ url_for('patient.submit_review', consult_id=consultation.id) }}">
+        <div class="rating-form">
+          <div class="rating-stars" id="ratingStars">
+            {% for i in range(1,6) %}<span data-value="{{ i }}">★</span>{% endfor %}
+          </div>
+          <input type="hidden" name="rating" id="ratingValue" value="5">
+          <textarea name="content" rows="2" placeholder="分享您的就诊体验..."></textarea>
+          <input type="text" name="tags" placeholder="标签（逗号分隔）：态度好,专业,耐心">
+          <button type="submit" class="btn btn-primary btn-block btn-sm">提交评价</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  function sendMessage(e) {
+    e.preventDefault();
+    var input = document.getElementById('chatInput');
+    var content = input.value.trim();
+    if (!content) return;
+    input.value = '';
+    fetch('{{ url_for("patient.send_message", consult_id=consultation.id) }}', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'content=' + encodeURIComponent(content)
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.ok) location.reload();
+    });
+  }
+  function setChatInput(text) {
+    var input = document.getElementById('chatInput');
+    if (input) { input.value = text; input.focus(); }
+  }
+  // Scroll to bottom
+  var msgs = document.getElementById('chatMessages');
+  if (msgs) msgs.scrollTop = msgs.scrollHeight;
+</script>
+{% endblock %}

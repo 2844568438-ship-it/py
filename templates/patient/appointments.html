@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}我的预约 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>我的预约</h1>
+  <p>查看和管理所有预约记录</p>
+</div>
+
+{% if appointments %}
+<div class="card">
+  <table class="table">
+    <thead><tr><th>医生</th><th>科室</th><th>日期</th><th>时段</th><th>病情描述</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for a in appointments %}
+      <tr>
+        <td><strong>{{ a.doctor.name }}</strong><br><small>{{ a.doctor.title or '' }}</small></td>
+        <td>{{ a.department.name }}</td>
+        <td>{{ a.appointment_date }}</td>
+        <td>{{ a.time_slot }}</td>
+        <td>{{ a.description | truncate(30) }}</td>
+        <td><span class="badge badge-{{ a.status }}">{{ {'pending':'待确认','confirmed':'已确认','completed':'已完成','cancelled':'已取消'}[a.status] }}</span></td>
+        <td>
+          {% if a.status == 'confirmed' %}
+          <a href="{{ url_for('patient.consultation', appt_id=a.id) }}" class="btn btn-sm btn-primary">进入问诊</a>
+          {% elif a.status == 'completed' %}
+          <a href="{{ url_for('patient.consultation', appt_id=a.id) }}" class="btn btn-sm btn-outline">查看</a>
+          {% elif a.status == 'pending' %}
+          <form method="POST" action="{{ url_for('patient.cancel_appointment', appt_id=a.id) }}" style="display:inline">
+            <input type="hidden" name="reason" value="患者取消">
+            <button class="btn btn-sm btn-outline" style="color:#ef4444">取消</button>
+          </form>
+          {% else %}
+          <span class="text-muted">已取消</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  <h3>暂无预约</h3>
+  <p>您还没有任何预约记录</p>
+  <a href="{{ url_for('patient.doctors') }}" class="btn btn-primary">去预约</a>
+</div>
+{% endif %}
+{% endblock %}

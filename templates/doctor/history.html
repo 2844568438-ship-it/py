@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}历史记录 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>接诊历史</h1>
+  <p>查看所有已完成和进行中的问诊记录</p>
+</div>
+
+<div class="card">
+  {% if consultations %}
+  <table class="table">
+    <thead><tr><th>患者</th><th>诊断</th><th>医嘱</th><th>开始时间</th><th>完成时间</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for c in consultations %}
+      <tr>
+        <td><strong>{{ c.patient.name }}</strong></td>
+        <td>{{ c.diagnosis or '—' | truncate(30) }}</td>
+        <td>{{ c.advice or '—' | truncate(30) }}</td>
+        <td>{{ c.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>{{ c.completed_at.strftime('%Y-%m-%d %H:%M') if c.completed_at else '—' }}</td>
+        <td><span class="badge {{ 'badge-completed' if c.status == 'completed' else 'badge-confirmed' }}">{{ '已完成' if c.status == 'completed' else '进行中' }}</span></td>
+        <td>
+          <a href="{{ url_for('doctor.consult', appt_id=c.appointment_id) }}" class="btn btn-sm btn-outline">查看</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state"><p>暂无历史记录</p></div>
+  {% endif %}
+</div>
+{% endblock %}

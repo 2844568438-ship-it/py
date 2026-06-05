@@ -1,0 +1,24 @@
+<a href="{{ url_for('admin.dashboard') }}" class="nav-item {{ 'active' if request.endpoint == 'admin.dashboard' }}">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+  <span>数据看板</span>
+</a>
+<a href="{{ url_for('admin.departments') }}" class="nav-item {{ 'active' if request.endpoint == 'admin.departments' }}">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+  <span>科室管理</span>
+</a>
+<a href="{{ url_for('admin.doctors') }}" class="nav-item {{ 'active' if request.endpoint == 'admin.doctors' }}">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+  <span>医生管理</span>
+</a>
+<a href="{{ url_for('admin.patients') }}" class="nav-item {{ 'active' if request.endpoint == 'admin.patients' }}">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg>
+  <span>患者管理</span>
+</a>
+<a href="{{ url_for('admin.medicines') }}" class="nav-item {{ 'active' if request.endpoint == 'admin.medicines' }}">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="3"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="12" y1="6" x2="12" y2="12"/></svg>
+  <span>药品管理</span>
+</a>
+<a href="{{ url_for('admin.announcements') }}" class="nav-item {{ 'active' if request.endpoint == 'admin.announcements' }}">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+  <span>公告管理</span>
+</a>

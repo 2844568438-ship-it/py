@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}患者管理 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header"><h1>患者管理</h1></div>
+<div class="card">
+  <table class="table">
+    <thead><tr><th>姓名</th><th>手机号</th><th>性别</th><th>年龄</th><th>注册时间</th></tr></thead>
+    <tbody>
+      {% for p in patients %}
+      <tr>
+        <td><strong>{{ p.name }}</strong></td>
+        <td>{{ p.phone }}</td>
+        <td>{{ p.gender or '—' }}</td>
+        <td>{{ p.age or '—' }}</td>
+        <td>{{ p.created_at.strftime('%Y-%m-%d') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

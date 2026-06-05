@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}科室管理 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>科室管理</h1>
+  <button class="btn btn-primary" onclick="document.getElementById('addDeptModal').classList.add('active')">+ 添加科室</button>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead><tr><th>ID</th><th>科室名称</th><th>描述</th><th>医生数</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for d in departments %}
+      <tr>
+        <td>{{ d.id }}</td>
+        <td><strong>{{ d.name }}</strong></td>
+        <td>{{ d.description or '—' }}</td>
+        <td>{{ d.doctors.count() }}</td>
+        <td>
+          <button class="btn btn-sm btn-outline" onclick="editDept({{ d.id }}, '{{ d.name }}', '{{ d.description or '' }}')">编辑</button>
+          <form method="POST" action="{{ url_for('admin.delete_department', dept_id=d.id) }}" style="display:inline" onsubmit="return confirm('确定删除该科室？')">
+            <button class="btn btn-sm btn-outline" style="color:#ef4444">删除</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- 添加弹窗 -->
+{% set modal_id = 'addDeptModal' %}{% set modal_title = '添加科室' %}{% set action = url_for('admin.add_department') %}
+{% include "admin/_dept_modal.html" %}
+
+<!-- 编辑弹窗 -->
+<div class="modal" id="editDeptModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>编辑科室</h3>
+      <button class="modal-close" onclick="document.getElementById('editDeptModal').classList.remove('active')">&times;</button>
+    </div>
+    <form id="editDeptForm" method="POST">
+      <div class="form-group">
+        <label>科室名称</label>
+        <input type="text" name="name" id="editDeptName" required>
+      </div>
+      <div class="form-group">
+        <label>描述</label>
+        <textarea name="description" id="editDeptDesc" rows="2"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">保存</button>
+    </form>
+  </div>
+</div>
+<script>
+  function editDept(id, name, desc) {
+    document.getElementById('editDeptForm').action = '/admin/department/edit/' + id;
+    document.getElementById('editDeptName').value = name;
+    document.getElementById('editDeptDesc').value = desc;
+    document.getElementById('editDeptModal').classList.add('active');
+  }
+</script>
+{% endblock %}

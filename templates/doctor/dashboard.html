@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}医生工作台 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>{{ current_user.department.name }} · {{ current_user.title or '医生' }}</h1>
+  <p>欢迎回来，{{ current_user.name }}</p>
+</div>
+
+<div class="stat-cards">
+  <div class="stat-card" style="--c:#2563eb">
+    <div class="stat-val">{{ today_appts }}</div>
+    <div class="stat-label">今日待接诊</div>
+  </div>
+  <div class="stat-card" style="--c:#f59e0b">
+    <div class="stat-val">{{ pending }}</div>
+    <div class="stat-label">待确认预约</div>
+  </div>
+  <div class="stat-card" style="--c:#10b981">
+    <div class="stat-val">{{ completed }}</div>
+    <div class="stat-label">已完成问诊</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3>近期预约</h3>
+    <a href="{{ url_for('doctor.appointments') }}" class="card-link">查看全部 →</a>
+  </div>
+  {% if recent_appts %}
+  <table class="table">
+    <thead><tr><th>患者</th><th>日期</th><th>时段</th><th>病情描述</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for a in recent_appts %}
+      <tr>
+        <td><strong>{{ a.patient.name }}</strong></td>
+        <td>{{ a.appointment_date }}</td>
+        <td>{{ a.time_slot }}</td>
+        <td>{{ a.description | truncate(30) }}</td>
+        <td><span class="badge badge-{{ a.status }}">{{ {'pending':'待确认','confirmed':'已确认','completed':'已完成','cancelled':'已取消'}[a.status] }}</span></td>
+        <td>
+          {% if a.status == 'pending' %}
+          <form method="POST" action="{{ url_for('doctor.confirm', appt_id=a.id) }}" style="display:inline">
+            <button class="btn btn-sm btn-primary">确认</button>
+          </form>
+          <button class="btn btn-sm btn-outline" style="color:#ef4444" onclick="showRejectModal({{ a.id }})">拒绝</button>
+          {% elif a.status == 'confirmed' %}
+          <a href="{{ url_for('doctor.consult', appt_id=a.id) }}" class="btn btn-sm btn-primary">接诊</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state"><p>暂无预约记录</p></div>
+  {% endif %}
+</div>
+
+<!-- 拒绝弹窗 -->
+<div class="modal" id="rejectModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>拒绝预约</h3>
+      <button class="modal-close" onclick="document.getElementById('rejectModal').classList.remove('active')">&times;</button>
+    </div>
+    <form id="rejectForm" method="POST">
+      <div class="form-group">
+        <label>拒绝原因</label>
+        <textarea name="reason" rows="2" required placeholder="请填写拒绝原因...">当前时段已满，请选择其他时段</textarea>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">确认拒绝</button>
+    </form>
+  </div>
+</div>
+<script>
+  function showRejectModal(apptId) {
+    document.getElementById('rejectForm').action = '/doctor/reject/' + apptId;
+    document.getElementById('rejectModal').classList.add('active');
+  }
+</script>
+{% endblock %}

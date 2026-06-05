@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}预约管理 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>预约管理</h1>
+  <div class="filter-tabs mt-2">
+    <a href="?" class="filter-tab {{ 'active' if not filter_status }}">全部</a>
+    <a href="?status=pending" class="filter-tab {{ 'active' if filter_status == 'pending' }}">待确认</a>
+    <a href="?status=confirmed" class="filter-tab {{ 'active' if filter_status == 'confirmed' }}">已确认</a>
+    <a href="?status=completed" class="filter-tab {{ 'active' if filter_status == 'completed' }}">已完成</a>
+    <a href="?status=cancelled" class="filter-tab {{ 'active' if filter_status == 'cancelled' }}">已取消</a>
+  </div>
+</div>
+
+<div class="card">
+  {% if appointments %}
+  <table class="table">
+    <thead><tr><th>患者</th><th>日期</th><th>时段</th><th>病情描述</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for a in appointments %}
+      <tr>
+        <td><strong>{{ a.patient.name }}</strong><br><small>{{ a.patient.gender }} · {{ a.patient.age }}岁</small></td>
+        <td>{{ a.appointment_date }}</td>
+        <td>{{ a.time_slot }}</td>
+        <td>{{ a.description | truncate(40) }}</td>
+        <td><span class="badge badge-{{ a.status }}">{{ {'pending':'待确认','confirmed':'已确认','completed':'已完成','cancelled':'已取消'}[a.status] }}</span></td>
+        <td>
+          {% if a.status == 'pending' %}
+          <form method="POST" action="{{ url_for('doctor.confirm', appt_id=a.id) }}" style="display:inline">
+            <button class="btn btn-sm btn-primary">确认</button>
+          </form>
+          <button class="btn btn-sm btn-outline" style="color:#ef4444" onclick="showReject({{ a.id }})">拒绝</button>
+          {% elif a.status == 'confirmed' %}
+          <a href="{{ url_for('doctor.consult', appt_id=a.id) }}" class="btn btn-sm btn-primary">接诊</a>
+          {% elif a.status == 'completed' %}
+          <a href="{{ url_for('doctor.consult', appt_id=a.id) }}" class="btn btn-sm btn-outline">查看</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state"><p>暂无符合条件的预约</p></div>
+  {% endif %}
+</div>
+
+<div class="modal" id="rejectModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>拒绝预约</h3>
+      <button class="modal-close" onclick="document.getElementById('rejectModal').classList.remove('active')">&times;</button>
+    </div>
+    <form id="rejectForm" method="POST">
+      <div class="form-group">
+        <label>拒绝原因</label>
+        <textarea name="reason" rows="2" required>当前时段已满，请选择其他时段</textarea>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">确认拒绝</button>
+    </form>
+  </div>
+</div>
+<script>
+  function showReject(apptId) {
+    document.getElementById('rejectForm').action = '/doctor/reject/' + apptId;
+    document.getElementById('rejectModal').classList.add('active');
+  }
+</script>
+{% endblock %}

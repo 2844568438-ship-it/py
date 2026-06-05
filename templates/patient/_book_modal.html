@@ -1,0 +1,13 @@
+<div class="modal" id="bookModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3>预约挂号 - <span id="bookDoctorName"></span></h3><button class="modal-close" onclick="closeBookModal()">&times;</button></div>
+    <form method="POST" action="{{ url_for('patient.book') }}">
+      <input type="hidden" name="doctor_id" id="bookDoctorId">
+      <div class="form-group"><label>就诊日期</label><input type="date" name="date" id="bookDate" required></div>
+      <div class="form-group"><label>就诊时段</label><select name="time_slot" required><option value="">请选择</option><option>08:00-09:00</option><option>09:00-10:00</option><option>10:00-11:00</option><option>11:00-12:00</option><option>14:00-15:00</option><option>15:00-16:00</option><option>16:00-17:00</option></select></div>
+      <div class="form-group"><label>病情描述</label><textarea name="description" rows="3" placeholder="请简要描述您的症状..." required></textarea></div>
+      <button type="submit" class="btn btn-primary btn-block">确认预约</button>
+    </form>
+  </div>
+</div>
+<script>document.addEventListener('DOMContentLoaded',function(){var d=new Date();var min=d.toISOString().split('T')[0];var max=new Date(d.getTime()+7*86400000).toISOString().split('T')[0];var el=document.getElementById('bookDate');if(el){el.min=min;el.max=max}});</script>

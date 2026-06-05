@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}健康科普 - 医联通{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="breadcrumb">首页 / 健康科普</div>
+    <h1>📖 健康科普</h1>
+    <p>专业医生撰写的健康文章，科学可靠，通俗易懂</p>
+  </div>
+</div>
+
+<div class="filter-tabs mb-4">
+  <a href="?category=all" class="filter-tab {{ 'active' if current_cat == 'all' }}">全部</a>
+  {% for c in categories %}
+  <a href="?category={{ c }}" class="filter-tab {{ 'active' if current_cat == c }}">{{ c }}</a>
+  {% endfor %}
+</div>
+
+{% if articles %}
+<div class="article-grid">
+  {% for a in articles %}
+  <a href="{{ url_for('patient.article_detail', art_id=a.id) }}" class="article-card">
+    <div class="article-cover">
+      <span class="article-cat">{{ a.category }}</span>
+      {{ {'常见病':'🫀','养生':'🧘','儿科':'👶','妇产':'🤰','心理':'🧠','营养':'🥗'}.get(a.category, '📄') }}
+    </div>
+    <div class="article-body">
+      <h3>{{ a.title }}</h3>
+      <p>{{ a.summary }}</p>
+      <div class="article-meta">
+        <span>{{ a.author_name }}</span>
+        <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> {{ a.created_at.strftime('%Y-%m-%d') }}</span>
+        <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> {{ a.view_count }}</span>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><h3>暂无相关文章</h3><p>换个分类试试</p></div>
+{% endif %}
+{% endblock %}
