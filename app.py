@@ -1,6 +1,6 @@
 from flask import Flask
 from config import Config
-from models import db, User
+from models import db, User, Department, Schedule, Appointment, Consultation, ConsultationMessage, Prescription, Medicine, Announcement, HealthArticle, DoctorReview, Bill, BillItem, PatientProfile, Notification
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 
