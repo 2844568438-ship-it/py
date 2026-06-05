@@ -71,7 +71,7 @@ def init_data():
             mentorship=dd.get('mentorship',''),
             awards=dd.get('awards',''),
             hospital=dd.get('hospital',''),
-            avatar=f"https://ui-avatars.com/api/?name={dd['name']}&size=300&background=1e4b8c&color=fff&bold=true&format=svg",
+            avatar="",  # 用CSS渐变+首字母，国内无障碍
             gender=random.choice(['男','女']),
             age=random.randint(40,68),
             consultation_fee=dd.get('fee',25)
