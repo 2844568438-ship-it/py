@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Appointment, Consultation, ConsultationMessage, Prescription, Medicine
+from models import db, Appointment, Consultation, ConsultationMessage, Prescription, Medicine, Bill, BillItem
 from datetime import datetime, date
 
 doctor_bp = Blueprint('doctor', __name__, url_prefix='/doctor')
@@ -122,6 +122,10 @@ def diagnose(consult_id):
     if consult.doctor_id != current_user.id:
         return jsonify({'error': '无权操作'}), 403
 
+    consult.chief_complaint = request.form.get('chief_complaint', '').strip()
+    consult.present_illness = request.form.get('present_illness', '').strip()
+    consult.physical_exam = request.form.get('physical_exam', '').strip()
+    consult.vital_signs = request.form.get('vital_signs', '').strip()
     consult.diagnosis = request.form.get('diagnosis', '').strip()
     consult.advice = request.form.get('advice', '').strip()
     consult.status = 'completed'
@@ -131,8 +135,30 @@ def diagnose(consult_id):
     if appt:
         appt.status = 'completed'
 
+    # 自动生成账单
+    bill = Bill.query.filter_by(consultation_id=consult_id).first()
+    if not bill:
+        bill = Bill(patient_id=consult.patient_id, consultation_id=consult_id, total_amount=0, status='unpaid')
+        db.session.add(bill)
+        db.session.flush()
+        # 诊查费
+        fee = current_user.consultation_fee or 0
+        if fee > 0:
+            db.session.add(BillItem(bill_id=bill.id, item_type='consultation_fee',
+                           item_name='诊查费', quantity=1, unit_price=fee, subtotal=fee))
+            bill.total_amount += fee
+        # 处方费用
+        from models import Prescription as PrescriptionModel
+        for p in PrescriptionModel.query.filter_by(consultation_id=consult_id).all():
+            if p.status == 'prescribed':
+                db.session.add(BillItem(bill_id=bill.id, item_type='medicine',
+                               item_name=p.medicine_name, quantity=p.quantity,
+                               unit_price=p.price / p.quantity if p.quantity else p.price,
+                               subtotal=p.price))
+                bill.total_amount += p.price
+
     db.session.commit()
-    flash('诊断完成', 'success')
+    flash('诊断完成，账单已生成', 'success')
     return redirect(url_for('doctor.consult', appt_id=consult.appointment_id))
 
 @doctor_bp.route('/prescribe/<int:consult_id>', methods=['POST'])
@@ -174,3 +200,47 @@ def history():
     consultations = Consultation.query.filter_by(doctor_id=current_user.id)\
         .order_by(Consultation.created_at.desc()).all()
     return render_template('doctor/history.html', consultations=consultations)
+
+# ─── 排队叫号 ─────────────────────────────────
+@doctor_bp.route('/queue')
+@login_required
+def queue():
+    if not current_user.is_doctor():
+        return redirect(url_for('auth.dashboard'))
+    today = date.today()
+    queue_list = Appointment.query.filter_by(doctor_id=current_user.id,
+        appointment_date=today, status='confirmed')\
+        .order_by(Appointment.queue_number.asc()).all()
+    current_idx = request.args.get('current', type=int, default=0)
+    return render_template('doctor/queue.html', queue_list=queue_list, current_idx=current_idx)
+
+@doctor_bp.route('/call_next/<int:appt_id>', methods=['POST'])
+@login_required
+def call_next(appt_id):
+    appt = Appointment.query.get_or_404(appt_id)
+    if appt.doctor_id != current_user.id:
+        return jsonify({'error': '无权操作'}), 403
+    return jsonify({'ok': True, 'patient_name': appt.patient.name, 'queue_number': appt.queue_number})
+
+# ─── 药房发药 ─────────────────────────────────
+@doctor_bp.route('/dispense/<int:prescription_id>', methods=['POST'])
+@login_required
+def dispense(prescription_id):
+    p = Prescription.query.get_or_404(prescription_id)
+    if p.doctor_id != current_user.id and not current_user.is_admin():
+        return jsonify({'error': '无权操作'}), 403
+    if p.status == 'dispensed':
+        flash('该处方已发药', 'info')
+        return redirect(request.referrer or url_for('doctor.history'))
+    # 扣库存
+    med = Medicine.query.filter_by(name=p.medicine_name).first()
+    if med:
+        if med.stock < p.quantity:
+            flash(f'{med.name} 库存不足（当前库存: {med.stock}）', 'error')
+            return redirect(request.referrer or url_for('doctor.history'))
+        med.stock -= p.quantity
+    p.status = 'dispensed'
+    p.dispensed_at = datetime.utcnow()
+    db.session.commit()
+    flash(f'{p.medicine_name} 发药成功', 'success')
+    return redirect(request.referrer or url_for('doctor.history'))

@@ -122,10 +122,11 @@
     var content = input.value.trim();
     if (!content) return;
     input.value = '';
+    var csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     fetch('{{ url_for("patient.send_message", consult_id=consultation.id) }}', {
       method: 'POST',
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: 'content=' + encodeURIComponent(content)
+      headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrf},
+      body: 'content=' + encodeURIComponent(content) + '&csrf_token=' + encodeURIComponent(csrf)
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.ok) location.reload();
     });

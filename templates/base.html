@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}医联通 - 在线医疗问诊平台{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </head>
@@ -117,6 +118,52 @@
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('collapsed');
     }
+    // CSRF: auto-inject token into all POST forms
+    (function() {
+      var token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      if (!token) return;
+      document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('form[method="POST"]').forEach(function(f) {
+          if (!f.querySelector('input[name="csrf_token"]')) {
+            var inp = document.createElement('input');
+            inp.type = 'hidden';
+            inp.name = 'csrf_token';
+            inp.value = token;
+            f.appendChild(inp);
+          }
+        });
+      });
+      // Also inject pending forms added dynamically
+      var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+          m.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1) {
+              if (node.matches && node.matches('form[method="POST"]')) {
+                if (!node.querySelector('input[name="csrf_token"]')) {
+                  var inp = document.createElement('input');
+                  inp.type = 'hidden';
+                  inp.name = 'csrf_token';
+                  inp.value = token;
+                  node.appendChild(inp);
+                }
+              }
+              if (node.querySelectorAll) {
+                node.querySelectorAll('form[method="POST"]').forEach(function(f) {
+                  if (!f.querySelector('input[name="csrf_token"]')) {
+                    var inp = document.createElement('input');
+                    inp.type = 'hidden';
+                    inp.name = 'csrf_token';
+                    inp.value = token;
+                    f.appendChild(inp);
+                  }
+                });
+              }
+            }
+          });
+        });
+      });
+      observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
+    })();
   </script>
 </body>
 </html>

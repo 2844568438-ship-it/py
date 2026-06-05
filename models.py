@@ -87,6 +87,8 @@ class Appointment(db.Model):
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'), nullable=False)
     appointment_date = db.Column(db.Date, nullable=False)
     time_slot = db.Column(db.String(32), nullable=False)   # "08:00-09:00"
+    queue_number = db.Column(db.Integer)                    # 当日排队号
+    visit_type = db.Column(db.String(16), default='first_visit')  # first_visit/follow_up/emergency
     description = db.Column(db.Text)                        # 病情描述
     status = db.Column(db.String(16), default='pending')    # pending/confirmed/completed/cancelled
     cancel_reason = db.Column(db.Text)
@@ -95,6 +97,12 @@ class Appointment(db.Model):
     patient = db.relationship('User', foreign_keys=[patient_id], backref='patient_appointments')
     doctor = db.relationship('User', foreign_keys=[doctor_id], backref='doctor_appointments')
     department = db.relationship('Department', backref='appointments')
+
+    __table_args__ = (
+        db.Index('idx_active_appt', 'doctor_id', 'appointment_date', 'time_slot',
+                 unique=True,
+                 sqlite_where=db.text("status IN ('pending', 'confirmed')")),
+    )
 
 # ============================================================
 # 问诊记录表
@@ -105,6 +113,10 @@ class Consultation(db.Model):
     appointment_id = db.Column(db.Integer, db.ForeignKey('appointments.id'), nullable=False)
     patient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     doctor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    chief_complaint = db.Column(db.Text)     # 主诉
+    present_illness = db.Column(db.Text)     # 现病史
+    physical_exam = db.Column(db.Text)       # 体格检查
+    vital_signs = db.Column(db.Text)         # JSON: {"temp":36.5,"pulse":72,"resp":18,"bp":"120/80"}
     diagnosis = db.Column(db.Text)           # 诊断结果
     advice = db.Column(db.Text)              # 医嘱
     status = db.Column(db.String(16), default='ongoing')  # ongoing / completed
@@ -145,6 +157,8 @@ class Prescription(db.Model):
     quantity = db.Column(db.Integer, default=1)
     price = db.Column(db.Float, default=0.0)
     notes = db.Column(db.Text)
+    status = db.Column(db.String(16), default='prescribed')  # prescribed/dispensed
+    dispensed_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     consultation = db.relationship('Consultation', backref='prescriptions')
@@ -228,3 +242,52 @@ class Notification(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User')
+
+# ============================================================
+# 账单表
+# ============================================================
+class Bill(db.Model):
+    __tablename__ = 'bills'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    consultation_id = db.Column(db.Integer, db.ForeignKey('consultations.id'), nullable=True)
+    total_amount = db.Column(db.Float, default=0.0)
+    status = db.Column(db.String(16), default='unpaid')  # unpaid/paid/refunded
+    payment_method = db.Column(db.String(32))  # cash/wechat/alipay/insurance
+    paid_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    patient = db.relationship('User', foreign_keys=[patient_id])
+    consultation = db.relationship('Consultation', backref='bill')
+    items = db.relationship('BillItem', backref='bill', lazy='dynamic',
+                             order_by='BillItem.id')
+
+class BillItem(db.Model):
+    __tablename__ = 'bill_items'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    bill_id = db.Column(db.Integer, db.ForeignKey('bills.id'), nullable=False)
+    item_type = db.Column(db.String(16), nullable=False)  # consultation_fee/medicine
+    item_name = db.Column(db.String(256), nullable=False)
+    quantity = db.Column(db.Integer, default=1)
+    unit_price = db.Column(db.Float, default=0.0)
+    subtotal = db.Column(db.Float, default=0.0)
+
+# ============================================================
+# 患者健康档案表
+# ============================================================
+class PatientProfile(db.Model):
+    __tablename__ = 'patient_profiles'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=False)
+    blood_type = db.Column(db.String(8))       # A/B/AB/O
+    allergies = db.Column(db.Text)              # JSON: ["青霉素","海鲜"]
+    chronic_diseases = db.Column(db.Text)       # JSON: ["高血压","糖尿病"]
+    family_history = db.Column(db.Text)
+    smoking = db.Column(db.String(16))          # never/former/current
+    alcohol = db.Column(db.String(16))          # never/occasional/regular
+    height = db.Column(db.Float)                # cm
+    weight = db.Column(db.Float)                # kg
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    patient = db.relationship('User', backref='profile', uselist=False)

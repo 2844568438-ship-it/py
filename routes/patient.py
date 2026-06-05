@@ -1,7 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Department, User, Schedule, Appointment, Consultation, ConsultationMessage, Prescription
+from models import db, Department, User, Schedule, Appointment, Consultation, ConsultationMessage, Prescription, Bill, BillItem, PatientProfile
 from datetime import datetime, date, timedelta
+from sqlalchemy.exc import IntegrityError
+import json
 
 patient_bp = Blueprint('patient', __name__, url_prefix='/patient')
 
@@ -85,17 +87,29 @@ def book():
         flash('该时段已被预约', 'error')
         return redirect(url_for('patient.doctors'))
 
+    # 计算当日排队号
+    day_count = Appointment.query.filter_by(doctor_id=doctor_id,
+        appointment_date=appt_date).count()
+    queue_num = day_count + 1
+
     appt = Appointment(
         patient_id=current_user.id,
         doctor_id=doctor_id,
         department_id=doctor.department_id,
         appointment_date=datetime.strptime(appt_date, '%Y-%m-%d').date(),
         time_slot=time_slot,
+        queue_number=queue_num,
+        visit_type=request.form.get('visit_type', 'first_visit'),
         description=description,
         status='pending'
     )
-    db.session.add(appt)
-    db.session.commit()
+    try:
+        db.session.add(appt)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        flash('该时段已被其他人抢先预约，请选择其他时段', 'error')
+        return redirect(url_for('patient.doctors'))
     flash('预约提交成功，等待医生确认', 'success')
     return redirect(url_for('patient.appointments'))
 
@@ -232,3 +246,64 @@ def article_detail(art_id):
     article.view_count = (article.view_count or 0) + 1
     db.session.commit()
     return render_template('patient/article_detail.html', article=article)
+
+# ─── 账单管理 ─────────────────────────────────
+@patient_bp.route('/bills')
+@login_required
+def bills():
+    if not current_user.is_patient():
+        return redirect(url_for('auth.dashboard'))
+    bill_list = Bill.query.filter_by(patient_id=current_user.id)\
+        .order_by(Bill.created_at.desc()).all()
+    return render_template('patient/bills.html', bills=bill_list)
+
+@patient_bp.route('/bill/<int:bill_id>')
+@login_required
+def bill_detail(bill_id):
+    bill = Bill.query.get_or_404(bill_id)
+    if bill.patient_id != current_user.id:
+        flash('无权访问', 'error')
+        return redirect(url_for('patient.bills'))
+    items = BillItem.query.filter_by(bill_id=bill_id).all()
+    return render_template('patient/bill_detail.html', bill=bill, items=items)
+
+@patient_bp.route('/pay/<int:bill_id>', methods=['POST'])
+@login_required
+def pay_bill(bill_id):
+    bill = Bill.query.get_or_404(bill_id)
+    if bill.patient_id != current_user.id:
+        flash('无权操作', 'error')
+        return redirect(url_for('patient.bills'))
+    if bill.status != 'unpaid':
+        flash('该账单无需支付', 'info')
+        return redirect(url_for('patient.bills'))
+    bill.status = 'paid'
+    bill.payment_method = request.form.get('payment_method', 'wechat')
+    bill.paid_at = datetime.utcnow()
+    db.session.commit()
+    flash('支付成功', 'success')
+    return redirect(url_for('patient.bill_detail', bill_id=bill_id))
+
+# ─── 健康档案 ─────────────────────────────────
+@patient_bp.route('/profile', methods=['GET', 'POST'])
+@login_required
+def my_profile():
+    if not current_user.is_patient():
+        return redirect(url_for('auth.dashboard'))
+    profile = PatientProfile.query.filter_by(patient_id=current_user.id).first()
+    if request.method == 'POST':
+        if not profile:
+            profile = PatientProfile(patient_id=current_user.id)
+            db.session.add(profile)
+        profile.blood_type = request.form.get('blood_type', '').strip()
+        profile.allergies = request.form.get('allergies', '').strip()
+        profile.chronic_diseases = request.form.get('chronic_diseases', '').strip()
+        profile.family_history = request.form.get('family_history', '').strip()
+        profile.smoking = request.form.get('smoking', 'never')
+        profile.alcohol = request.form.get('alcohol', 'never')
+        profile.height = request.form.get('height', type=float)
+        profile.weight = request.form.get('weight', type=float)
+        db.session.commit()
+        flash('健康档案已更新', 'success')
+        return redirect(url_for('patient.my_profile'))
+    return render_template('patient/profile.html', profile=profile)

@@ -106,10 +106,11 @@
     const input = document.getElementById('chatInput');
     const content = input.value.trim();
     if (!content) return;
+    var csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     fetch('{{ url_for("doctor.send_message", consult_id=consultation.id) }}', {
       method: 'POST',
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: 'content=' + encodeURIComponent(content)
+      headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrf},
+      body: 'content=' + encodeURIComponent(content) + '&csrf_token=' + encodeURIComponent(csrf)
     }).then(r => r.json()).then(data => { if (data.ok) location.reload(); });
   }
 </script>
