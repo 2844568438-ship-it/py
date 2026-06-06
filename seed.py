@@ -71,7 +71,8 @@ def init_data():
             mentorship=dd.get('mentorship',''),
             awards=dd.get('awards',''),
             hospital=dd.get('hospital',''),
-            avatar = f"/proxy_img/{dd['name']}" if dd['name'] in ['钟南山','李兰娟','张文宏'] else '',
+            wiki = ['钟南山','李兰娟','张文宏']
+            avatar = f"/proxy_img/{dd['name']}" if dd['name'] in wiki else f"/static/uploads/doctors/d{i%7}.jpg"
             gender=random.choice(['男','女']),
             age=random.randint(40,68),
             consultation_fee=dd.get('fee',25)
