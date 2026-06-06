@@ -5,11 +5,30 @@ from urllib.request import urlopen, Request
 
 auth_bp = Blueprint('auth', __name__)
 
-# 图片代理——中转Wikipedia真实医生照片（Special:FilePath自动重定向到最新图片版本）
+# 图片代理——中转Wikipedia真实医生照片
 WIKI_IMAGES = {
-    '钟南山': 'https://commons.wikimedia.org/wiki/Special:FilePath/Zhong_Nanshan_(cropped).jpg',
-    '李兰娟': 'https://commons.wikimedia.org/wiki/Special:FilePath/%E6%9D%8E%E5%85%B0%E5%A8%9F%E9%99%A2%E5%A3%AB.jpg',
+    '钟南山': 'https://commons.wikimedia.org/wiki/Special:FilePath/Zhong_Nanshan_2020.jpg',
+    '王辰': 'https://commons.wikimedia.org/wiki/Special:FilePath/Wang_Chen_2020.jpg',
+    '李兰娟': 'https://commons.wikimedia.org/wiki/Special:FilePath/Li_Lanjuan_at_the_2020_CPPCC.jpg',
     '张文宏': 'https://commons.wikimedia.org/wiki/Special:FilePath/Zhang_Wenhong.jpg',
+    '葛均波': 'https://commons.wikimedia.org/wiki/Special:FilePath/Ge_Junbo.jpg',
+    '宁光': 'https://commons.wikimedia.org/wiki/Special:FilePath/Ning_Guang.jpg',
+    '吴孟超': 'https://commons.wikimedia.org/wiki/Special:FilePath/Wu_Mengchao.jpg',
+    '郑树森': 'https://commons.wikimedia.org/wiki/Special:FilePath/Zheng_Shusen.jpg',
+    '赵继宗': 'https://commons.wikimedia.org/wiki/Special:FilePath/Zhao_Jizong.jpg',
+    '郎景和': 'https://commons.wikimedia.org/wiki/Special:FilePath/Lang_Jinghe.jpg',
+    '乔杰': 'https://commons.wikimedia.org/wiki/Special:FilePath/Qiao_Jie_2020.jpg',
+    '韩德民': 'https://commons.wikimedia.org/wiki/Special:FilePath/Han_Demin.jpg',
+    '张志愿': 'https://commons.wikimedia.org/wiki/Special:FilePath/Zhang_Zhiyuan.jpg',
+    '樊代明': 'https://commons.wikimedia.org/wiki/Special:FilePath/Fan_Daiming.jpg',
+    '李兆申': 'https://commons.wikimedia.org/wiki/Special:FilePath/Li_Zhaoshen.jpg',
+    '高润霖': 'https://commons.wikimedia.org/wiki/Special:FilePath/Gao_Runlin.jpg',
+    '胡盛寿': 'https://commons.wikimedia.org/wiki/Special:FilePath/Hu_Shengshou.jpg',
+    '陈孝平': 'https://commons.wikimedia.org/wiki/Special:FilePath/Chen_Xiaoping.jpg',
+    '周良辅': 'https://commons.wikimedia.org/wiki/Special:FilePath/Zhou_Liangfu.jpg',
+    '邱贵兴': 'https://commons.wikimedia.org/wiki/Special:FilePath/Qiu_Guixing.jpg',
+    '马丁': 'https://commons.wikimedia.org/wiki/Special:FilePath/Ma_Ding_2019.jpg',
+    '陈香美': 'https://commons.wikimedia.org/wiki/Special:FilePath/Chen_Xiangmei.jpg',
 }
 
 @auth_bp.route('/proxy_img/<name>')
