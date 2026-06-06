@@ -71,8 +71,18 @@ def init_data():
             mentorship=dd.get('mentorship',''),
             awards=dd.get('awards',''),
             hospital=dd.get('hospital',''),
-            wiki = ['钟南山','王辰','李兰娟','张文宏','葛均波','宁光','吴孟超','郑树森','赵继宗','郎景和','乔杰','韩德民','张志愿','樊代明','李兆申','高润霖','胡盛寿','陈孝平','周良辅','邱贵兴','马丁','陈香美']
-            avatar = f"/proxy_img/{dd['name']}" if dd['name'] in wiki else f"/static/uploads/doctors/d{i%7}.jpg",
+            avatar = [
+                'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d',
+                'https://images.unsplash.com/photo-1622253692010-333f2da6031d',
+                'https://images.unsplash.com/photo-1594824476967-48c8b964273f',
+                'https://images.unsplash.com/photo-1559839734-2b71ea197ec2',
+                'https://images.unsplash.com/photo-1537368910025-700350fe46c7',
+                'https://images.unsplash.com/photo-1651008376811-b90baee60c1f',
+                'https://images.unsplash.com/photo-1666214280557-f1b5022eb634',
+                'https://images.unsplash.com/photo-1591604022897-ad46ff752bcc',
+                'https://images.unsplash.com/photo-1582750433449-648ed127bb54',
+                'https://images.unsplash.com/photo-1560250097-0b93528c311a',
+            ][i % 10] + '?w=400&h=400&fit=crop&crop=face',
             gender=random.choice(['男','女']),
             age=random.randint(40,68),
             consultation_fee=dd.get('fee',25)
